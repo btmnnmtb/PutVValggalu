@@ -10,26 +10,13 @@ ON cart_items
 FOR EACH ROW
 EXECUTE FUNCTION update_cart_total();
 
-CREATE OR REPLACE FUNCTION trg_comments_recalc_item_rating()
-RETURNS trigger
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  IF TG_OP = 'INSERT' THEN
-    PERFORM item_rating(NEW.cosmetic_item_id);
+CREATE TRIGGER comments_aiud_recalc_rating
+AFTER INSERT OR UPDATE OF rating, cosmetic_item_id OR DELETE
+ON comments
+FOR EACH ROW
+EXECUTE FUNCTION trg_comments_recalc_item_rating();
 
-  ELSIF TG_OP = 'UPDATE' THEN
-    IF NEW.cosmetic_item_id IS DISTINCT FROM OLD.cosmetic_item_id THEN
-      PERFORM item_rating(OLD.cosmetic_item_id);
-      PERFORM item_rating(NEW.cosmetic_item_id);
-    ELSIF NEW.rating IS DISTINCT FROM OLD.rating THEN
-      PERFORM item_rating(NEW.cosmetic_item_id);
-    END IF;
-
-  ELSIF TG_OP = 'DELETE' THEN
-    PERFORM item_rating(OLD.cosmetic_item_id);
-  END IF;
-
-  RETURN NULL; 
-END;
-$$;
+CREATE TRIGGER users_after_insert_log
+AFTER INSERT ON users
+FOR EACH ROW
+EXECUTE FUNCTION trg_log_register();

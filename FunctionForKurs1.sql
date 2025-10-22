@@ -88,6 +88,25 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION trg_log_register()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+DECLARE v_action_id INT;
+BEGIN
+  SELECT action_id INTO v_action_id
+  FROM actions
+  WHERE action_name = 'Зарегистрироваля';
+
+  IF v_action_id IS NOT NULL THEN
+    INSERT INTO logs(action_id, user_id, log_date)
+    VALUES (v_action_id, NEW.user_id, now());
+  END IF;
+
+  RETURN NEW;
+END$$;
+
+
 
 
 

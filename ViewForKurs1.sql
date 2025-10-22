@@ -19,6 +19,7 @@ LEFT JOIN cosmetic_types t ON t.cosmetic_type_id = ci.cosmetic_type_id
 LEFT JOIN quality_certificates qc ON qc.certificate_id = ci.certificate_id
 LEFT JOIN product_statuses ps ON ps.product_status_id = ci.product_status_id; 
 select * from cosmetic_table
+select *from users_table
 
 CREATE OR REPLACE VIEW users_table AS
 SELECT
@@ -41,4 +42,6 @@ select
 from cart_items ci
 left join cosmetic_items cosi on cosi.cosmetic_item_id = ci.cosmetic_item_id
 
+select * from cart_items_view
+select * from carts
 
