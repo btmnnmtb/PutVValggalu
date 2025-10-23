@@ -12,6 +12,9 @@
     </style>
 </head>
 <body>
+
+<div th:replace="~{fragments :: headerFragment(${roles}, ${username})}"></div>
+
 <h1>Каталог косметики</h1>
 
 <table>
@@ -39,7 +42,6 @@
         <td th:text="${item.certificateName}">Сертификат</td>
         <td th:text="${item.statusName}">Статус</td>
         <td th:text="${item.quantity}">0</td>
-        <!-- если хочешь форматировать до 2 знаков: ${#numbers.formatDecimal(item.price,1,2)} -->
         <td th:text="${item.price}">0.00</td>
         <td>
             <img th:if="${item.imagePath != null}" th:src="${item.imagePath}" alt="img"/>

@@ -21,12 +21,12 @@ public class ConfigSecrurity {
                 csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth->auth
                         .requestMatchers("/registration", "/login").permitAll()
-                        .requestMatchers("/TestPage").authenticated()
+                        .requestMatchers("/TestPage" , "/MainWindow").authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
-                        .defaultSuccessUrl("/TestPage", true)
+                        .defaultSuccessUrl("/MainWindow", true)
                         .failureUrl("/login?error=true")
                         .permitAll()
 

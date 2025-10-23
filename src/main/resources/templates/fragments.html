@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #e91e63;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #e91e63;
+        }
+
+        /* Для админской панели */
+        .admin-header {
+            background: rgba(220, 53, 69, 0.95) !important;
+            backdrop-filter: blur(10px);
+        }
+        .admin-nav a {
+            color: white !important;
+        }
+        .admin-nav a:hover {
+            color: #ffccd5 !important;
+        }
+        .admin-logo {
+            color: white !important;
+        }
+
+        /* Для менеджерской панели */
+        .manager-header {
+            background: rgba(23, 162, 184, 0.95) !important;
+            backdrop-filter: blur(10px);
+        }
+        .manager-nav a {
+            color: white !important;
+        }
+        .manager-nav a:hover {
+            color: #b3e5fc !important;
+        }
+        .manager-logo {
+            color: white !important;
+        }
+
+        /* Для пользователя */
+        .user-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Общие стили для всех header'ов */
+        .main-header {
+            padding: 1rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+
+        .user-info {
+            margin-right: 20px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .admin-user-info {
+            color: white !important;
+        }
+
+        .manager-user-info {
+            color: white !important;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Универсальный фрагмент, который определяет header по роли -->
+<div th:fragment="headerFragment(roles, username)">
+    <div th:switch="${roles}">
+        <!-- Администратор -->
+        <div th:case="'Администратор'">
+            <header class="main-header admin-header">
+                <nav class="nav-container">
+                    <a href="/admin" class="logo admin-logo">Glamour Admin</a>
+                    <span class="user-info admin-user-info">Добро пожаловать, <strong th:text="${username}"></strong></span>
+                    <ul class="nav-links admin-nav">
+                        <li><a href="/admin/dashboard">Дашборд</a></li>
+                        <li><a href="/users">Пользователи</a></li>
+                        <li><a href="/admin/products">Товары</a></li>
+                        <li><a href="/admin/orders">Заказы</a></li>
+                        <li><a href="/Welcome">Сайт</a></li>
+                        <li><a href="/logout">Выйти</a></li>
+                    </ul>
+                </nav>
+            </header>
+        </div>
+
+        <!-- Менеджер -->
+        <div th:case="'Менеджер'">
+            <header class="main-header manager-header">
+                <nav class="nav-container">
+                    <a href="/manager" class="logo manager-logo">Glamour Manager</a>
+                    <span class="user-info manager-user-info">Добро пожаловать, <strong th:text="${username}"></strong></span>
+                    <ul class="nav-links manager-nav">
+                        <li><a href="/ManagerPage">Товары</a></li>
+                        <li><a href="/manager/orders">Заказы</a></li>
+                        <li><a href="/manager/inventory">Склад</a></li>
+                        <li><a href="/manager/reports">Отчеты</a></li>
+                        <li><a href="/Welcome">Сайт</a></li>
+                        <li><a href="/logout">Выйти</a></li>
+                    </ul>
+                </nav>
+            </header>
+        </div>
+
+        <!-- Пользователь -->
+        <div th:case="*">
+            <header class="main-header user-header">
+                <nav class="nav-container">
+                    <a href="/Welcome" class="logo">Glamour</a>
+                    <span class="user-info">Добро пожаловать, <strong th:text="${username}"></strong></span>
+                    <ul class="nav-links">
+                        <li><a href="/Welcome">Главная</a></li>
+                        <li><a href="/catalog">Каталог</a></li>
+                        <li><a href="/brands">Бренды</a></li>
+                        <li><a href="/promotions">Акции</a></li>
+                        <li><a href="/about">О нас</a></li>
+                        <li><a href="/Basket">Корзина</a></li>
+                        <li><a href="/logout">Выйти</a></li>
+                    </ul>
+                </nav>
+            </header>
+        </div>
+    </div>
+</div>
+
+<!-- Отдельные фрагменты для каждого типа пользователя (опционально) -->
+<div th:fragment="userHeader">
+    <header class="main-header user-header">
+        <nav class="nav-container">
+            <a href="/Welcome" class="logo">Glamour</a>
+            <ul class="nav-links">
+                <li><a href="/Welcome">Главная</a></li>
+                <li><a href="/catalog">Каталог</a></li>
+                <li><a href="/brands">Бренды</a></li>
+                <li><a href="/promotions">Акции</a></li>
+                <li><a href="/about">О нас</a></li>
+                <li><a href="/Basket">Корзина</a></li>
+                <li><a href="/logout">Выйти</a></li>
+            </ul>
+        </nav>
+    </header>
+</div>
+
+<div th:fragment="adminHeader">
+    <header class="main-header admin-header">
+        <nav class="nav-container">
+            <a href="/admin" class="logo admin-logo">Glamour Admin</a>
+            <ul class="nav-links admin-nav">
+                <li><a href="/admin/dashboard">Дашборд</a></li>
+                <li><a href="/users">Пользователи</a></li>
+                <li><a href="/admin/products">Товары</a></li>
+                <li><a href="/admin/orders">Заказы</a></li>
+                <li><a href="/admin/analytics">Аналитика</a></li>
+                <li><a href="/Welcome">Сайт</a></li>
+                <li><a href="/logout">Выйти</a></li>
+            </ul>
+        </nav>
+    </header>
+</div>
+
+<div th:fragment="managerHeader">
+    <header class="main-header manager-header">
+        <nav class="nav-container">
+            <a href="/manager" class="logo manager-logo">Glamour Manager</a>
+            <ul class="nav-links manager-nav">
+                <li><a href="/ManagerPage">Товары</a></li>
+                <li><a href="/manager/orders">Заказы</a></li>
+                <li><a href="/manager/inventory">Склад</a></li>
+                <li><a href="/manager/reports">Отчеты</a></li>
+                <li><a href="/Welcome">Сайт</a></li>
+                <li><a href="/logout">Выйти</a></li>
+            </ul>
+        </nav>
+    </header>
+</div>
+
+</body>
+</html>
