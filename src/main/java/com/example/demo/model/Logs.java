@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Entity
 @Data
@@ -25,14 +27,14 @@ public class Logs {
     private Actions action;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id" , nullable = true)
     private User user;
 
     @Column(name = "log_date", nullable = false)
-    private Instant logDate = Instant.now();
+    private LocalDateTime logDate;
     @PrePersist
     protected void onCreate() {
-        this.logDate = Instant.now();
+        this.logDate = LocalDateTime.now(ZoneId.of("Europe/Moscow"));
     }
 }
 

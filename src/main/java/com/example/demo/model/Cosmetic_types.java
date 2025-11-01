@@ -14,7 +14,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 
-public class Сosmetic_types {
+public class Cosmetic_types {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "cosmetic_type_id")

@@ -258,12 +258,10 @@
     </style>
 </head>
 <body>
-<!-- Header -->
 <header class="header">
     <div th:replace="~{fragments :: headerFragment(${roles}, ${username})}"></div>
 </header>
 
-<!-- Hero Section -->
 <section class="hero">
     <div class="hero-content">
         <h1>Ваша красота начинается здесь</h1>
@@ -272,7 +270,6 @@
     </div>
 </section>
 
-<!-- Categories -->
 <section class="categories">
     <h2 class="section-title">Категории</h2>
     <div class="category-grid">
@@ -307,7 +304,6 @@
     </div>
 </section>
 
-<!-- Features -->
 <section class="features">
     <h2 class="section-title">Почему выбирают нас</h2>
     <div class="feature-grid">
@@ -330,20 +326,15 @@
     </div>
 </section>
 
-<!-- Brands -->
 <section class="brands">
     <h2 class="section-title">Наши бренды</h2>
     <div class="brand-grid">
-        <div class="brand-logo">CHANEL</div>
-        <div class="brand-logo">DIOR</div>
-        <div class="brand-logo">LANCÔME</div>
-        <div class="brand-logo">ESTÉE LAUDER</div>
-        <div class="brand-logo">CLARINS</div>
-        <div class="brand-logo">SISLEY</div>
+        <div th:each="brand : ${brands}" class="brand-logo">
+            <span th:text="${brand.brandName}">Brand Name</span>
+        </div>
     </div>
 </section>
 
-<!-- Footer -->
 <footer class="footer">
     <div class="footer-content">
         <div class="footer-section">

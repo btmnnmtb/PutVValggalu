@@ -21,6 +21,7 @@ public class AuthService {
     public User registerUser(String username, String rawPassword , String rrole){
         Roles roles = rolesRepository.findByRoleName(rrole)
                 .orElseThrow(() -> new RuntimeException("Роль не найдена: " + rrole));
+
         User user = new User();
         user.setLogin(username);
         user.setPasswordHash(passwordEncoder.encode(rawPassword));

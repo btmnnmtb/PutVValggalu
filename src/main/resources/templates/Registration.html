@@ -74,8 +74,8 @@
         <div th:if="${#fields.hasErrors('login')}" th:errors="*{login}" class="error"></div>
 
         <label for="password">Пароль:</label>
-        <input type="password" id="password" th:field="*{passwordHash}" required>
-        <div th:if="${#fields.hasErrors('passwordHash')}" th:errors="*{passwordHash}" class="error"></div>
+        <input type="password" id="password" th:field="*{rawPassword}" required>
+        <div th:if="${#fields.hasErrors('rawPassword')}" th:errors="*{rawPassword}" class="error"></div>
 
 
         <button type="submit">Зарегистрироваться</button>

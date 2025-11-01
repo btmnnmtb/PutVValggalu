@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель администратора - Glamour</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding-top: 80px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            color: #2d3748;
+        }
+
+        .page-title {
+            font-size: 3rem;
+            font-weight: 300;
+            margin-bottom: 1rem;
+            position: relative;
+            display: inline-block;
+        }
+
+        .page-title::before {
+            content: '';
+            position: absolute;
+            left: -70px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 2.5rem;
+        }
+
+        .page-subtitle {
+            font-size: 1.3rem;
+            color: #718096;
+            font-weight: 300;
+        }
+
+        /* Статистика */
+        .admin-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .stat-number {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #2d3748;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #718096;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        /* Панель управления */
+        .admin-controls {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .control-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .control-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Таблица пользователей */
+        .users-section {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-title::before {
+            content: '👥';
+            font-size: 1.5rem;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            background: white;
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+        }
+
+        .users-table th {
+            background: #f7fafc;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #4a5568;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .users-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .user-row:hover {
+            background: #f7fafc;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 0.5rem;
+            vertical-align: middle;
+        }
+
+        .user-placeholder {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+            margin-right: 0.5rem;
+            vertical-align: middle;
+        }
+
+        .user-role {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .role-admin {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .role-user {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .role-manager {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .btn-edit {
+            background: #fff3e0;
+            color: #ef6c00;
+            border: 1px solid #ffcc80;
+        }
+
+        .btn-edit:hover {
+            background: #ffcc80;
+        }
+
+        .btn-delete {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+
+        .btn-delete:hover {
+            background: #ffcdd2;
+        }
+
+        .btn-add {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .btn-add:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        /* Модальное окно */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+            position: relative;
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f7fafc;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #718096;
+        }
+
+        .close-btn:hover {
+            color: #2d3748;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+        }
+
+        .btn-cancel {
+            background: #f7fafc;
+            color: #4a5568;
+            border: 1px solid #e2e8f0;
+        }
+
+        .btn-cancel:hover {
+            background: #e2e8f0;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-save:hover {
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        /* Адаптивность */
+        @media (max-width: 1200px) {
+            .admin-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .page-title {
+                font-size: 2.2rem;
+            }
+
+            .page-title::before {
+                display: none;
+            }
+
+            .users-table {
+                display: block;
+                overflow-x: auto;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .admin-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments :: headerFragment(role=${role}, username=${username})}"></div>
+
+<div class="container">
+    <div class="page-header">
+        <h1 class="page-title">Панель администратора</h1>
+        <p class="page-subtitle">Управление пользователями и системой</p>
+    </div>
+
+    <div class="admin-stats">
+        <div class="stat-card">
+            <span class="stat-icon">👥</span>
+            <span class="stat-number" th:text="${usersCount}">0</span>
+            <span class="stat-label">Всего пользователей</span>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-icon">📦</span>
+            <span class="stat-number" th:text="${ordersCount}">0</span>
+            <span class="stat-label">Всего заказов</span>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-icon">💰</span>
+            <span class="stat-number"
+                  th:text="${#numbers.formatDecimal(totalRevenue, 0, 'COMMA', 2, 'POINT') + ' ₽'}">0</span>
+            <span class="stat-label">Общий доход</span>
+        </div>
+    </div>
+
+    <div class="admin-controls">
+        <div class="controls-grid">
+            <button class="control-btn" type="button" onclick="openAddUserModal()">
+                <span class="control-icon">➕</span>
+                Добавить пользователя
+            </button>
+            <a href="/reports" class="control-btn">
+                <span class="control-icon">📊</span>
+                Отчеты и аналитика
+            </a>
+        </div>
+    </div>
+
+    <!-- Список пользователей -->
+    <div class="users-section">
+        <h2 class="section-title">Управление пользователями</h2>
+
+        <input type="text" class="search-box" placeholder="🔍 Поиск пользователей..." oninput="filterUsers(this.value)">
+
+        <table class="users-table">
+            <thead>
+            <tr>
+                <th>Пользователь</th>
+                <th>Роль</th>
+                <th>Действия</th>
+            </tr>
+            </thead>
+            <tbody id="usersTbody">
+            <tr class="user-row" th:each="user : ${users}">
+                <td>
+                    <div class="user-placeholder">👤</div>
+                    <span th:text="${user.login}">Имя пользователя</span>
+                </td>
+                <td>
+          <span th:classappend="'user-role ' +
+              (${#strings.equalsIgnoreCase(user.role.roleName,'ADMIN')} ? 'role-admin' :
+              (${#strings.equalsIgnoreCase(user.role.roleName,'MANAGER')} ? 'role-manager' : 'role-user'))"
+                th:text="${user.role.roleName}">Роль</span>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn btn-edit"
+                                th:attr="data-id=${user.userId},
+                             data-username=${user.login},
+                             data-role=${user.role.roleName}"
+                                type="button"
+                                onclick="onEditClick(this)">
+                            ✏️ Изменить
+                        </button>
+
+                        <button class="btn btn-delete"
+                                th:attr="data-id=${user.userId}"
+                                type="button"
+                                onclick="confirmDeleteUser(this.dataset.id)">
+                            🗑️ Удалить
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <button class="btn-add" type="button" onclick="openAddUserModal()">
+            ➕ Добавить пользователя
+        </button>
+    </div>
+</div>
+
+<!-- Модалка ДОБАВЛЕНИЯ -->
+<div id="addUserModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Добавить пользователя</h3>
+            <button class="close-btn" type="button" onclick="closeAddUserModal()">×</button>
+        </div>
+
+        <form th:action="@{/admin/users/add}" th:object="${createUser}" method="post" novalidate>
+
+
+            <label class="form-label" for="username">Имя пользователя</label>
+            <input type="text" id="username" th:field="*{login}" class="form-input" required minlength="3" maxlength="20">
+            <div class="error" th:if="${#fields.hasErrors('login')}" th:errors="*{login}"></div>
+
+            <label class="form-label" for="password">Пароль</label>
+            <input type="password" id="password" th:field="*{rawPassword}" class="form-input" required minlength="6" maxlength="20">
+            <div class="error" th:if="${#fields.hasErrors('rawPassword')}" th:errors="*{rawPassword}"></div>
+
+            <div class="form-group">
+                <label class="form-label" for="role">Роль</label>
+                <select id="role" th:field="*{roleName}" class="form-select" required>
+                    <option th:each="r : ${roles}" th:value="${r.roleName}" th:text="${r.roleName}"></option>
+                </select>
+                <div class="error" th:if="${#fields.hasErrors('roleName')}" th:errors="*{roleName}"></div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-cancel" onclick="closeAddUserModal()">Отмена</button>
+                <button type="submit" class="btn btn-save">Сохранить</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Модалка РЕДАКТИРОВАНИЯ -->
+<div id="editUserModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Редактировать пользователя</h3>
+            <button class="close-btn" type="button" onclick="closeEditUserModal()">×</button>
+        </div>
+
+        <form th:action="@{/admin/users/update}" th:object="${editUser}" method="post" novalidate>
+
+
+            <input type="hidden" th:field="*{userId}" id="editUserId">
+
+            <label class="form-label" for="editUsername">Имя пользователя</label>
+            <input type="text" id="editUsername" th:field="*{login}" class="form-input" required minlength="3" maxlength="20">
+            <div class="error" th:if="${#fields.hasErrors('login')}" th:errors="*{login}"></div>
+
+            <label class="form-label" for="editPassword">Новый пароль (не обяз.)</label>
+            <input type="password" id="editPassword" th:field="*{rawPassword}" class="form-input" placeholder="Оставьте пустым, чтобы не менять" minlength="6" maxlength="20">
+            <div class="error" th:if="${#fields.hasErrors('rawPassword')}" th:errors="*{rawPassword}"></div>
+
+            <div class="form-group">
+                <label class="form-label" for="editRole">Роль</label>
+                <select id="editRole" th:field="*{roleName}" class="form-select" required>
+                    <option th:each="r : ${roles}" th:value="${r.roleName}" th:text="${r.roleName}"></option>
+                </select>
+                <div class="error" th:if="${#fields.hasErrors('roleName')}" th:errors="*{roleName}"></div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-cancel" onclick="closeEditUserModal()">Отмена</button>
+                <button type="submit" class="btn btn-save">Сохранить изменения</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // ---- Поиск по таблице (клиентский) ----
+    function filterUsers(q){
+      q = (q || '').toLowerCase();
+      const rows = document.querySelectorAll('#usersTbody .user-row');
+      rows.forEach(tr=>{
+        const text = tr.innerText.toLowerCase();
+        tr.style.display = text.includes(q) ? '' : 'none';
+      });
+    }
+
+    // ---- Модалки ----
+    function openAddUserModal(){ document.getElementById('addUserModal').style.display = 'flex'; }
+    function closeAddUserModal(){ document.getElementById('addUserModal').style.display = 'none'; }
+    function openEditUserModal(){ document.getElementById('editUserModal').style.display = 'flex'; }
+    function closeEditUserModal(){ document.getElementById('editUserModal').style.display = 'none'; }
+
+    // ---- Открыть модалку редактирования и заполнить поля ----
+    function onEditClick(btn){
+      document.getElementById('editUserId').value   = btn.dataset.id;
+      document.getElementById('editUsername').value = btn.dataset.username;
+      document.getElementById('editRole').value     = btn.dataset.role;
+      openEditUserModal();
+    }
+
+    // ---- Удаление пользователя (CSRF выключен) ----
+    function confirmDeleteUser(userId){
+      if (!userId){ alert('Не передан ID пользователя'); return; }
+      if (!confirm('Вы уверены, что хотите удалить этого пользователя?')) return;
+
+      fetch('/admin/users/delete/' + userId, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      }).then(resp=>{
+        if (resp.ok) location.reload();
+        else alert('Ошибка при удалении пользователя (HTTP ' + resp.status + ')');
+      }).catch(()=>alert('Ошибка при удалении пользователя'));
+    }
+
+    // ---- Фокус на первом поле с ошибкой в модалке ----
+    function focusFirstError(modalId){
+      const modal = document.getElementById(modalId);
+      if (!modal) return;
+      const errors = Array.from(modal.querySelectorAll('.error'));
+      const firstErr = errors.find(e => (e.textContent || '').trim().length > 0);
+      if (firstErr){
+        const prev = firstErr.previousElementSibling;
+        const input = prev && prev.matches('input,select,textarea')
+          ? prev
+          : modal.querySelector('input,select,textarea');
+        if (input) input.focus();
+      }
+    }
+
+    // Закрытие по клику на фон
+    window.onclick = function(e){
+      const addM  = document.getElementById('addUserModal');
+      const editM = document.getElementById('editUserModal');
+      if (e.target === addM)  closeAddUserModal();
+      if (e.target === editM) closeEditUserModal();
+    }
+</script>
+
+<!-- ВАЖНО: этот блок ДОЛЖЕН быть th:inline, иначе значения не подставятся -->
+<script th:inline="javascript">
+    /*<![CDATA[*/
+      document.addEventListener('DOMContentLoaded', function(){
+        const openAdd  = /*[[${openAddModal}]]*/ false;
+        const openEdit = /*[[${openEditModal}]]*/ false;
+
+        if (openAdd) {
+          document.getElementById('addUserModal').style.display = 'flex';
+          // Дадим DOM дорендериться и сфокусируемся
+          setTimeout(() => focusFirstError('addUserModal'), 0);
+        }
+        if (openEdit) {
+          document.getElementById('editUserModal').style.display = 'flex';
+          setTimeout(() => focusFirstError('editUserModal'), 0);
+        }
+      });
+    /*]]>*/
+</script>
+</body>
+</html>

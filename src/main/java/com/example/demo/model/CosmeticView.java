@@ -48,4 +48,6 @@ public class CosmeticView {
 
     @Column(name = "status_name")
     private String statusName;
+    @Column(name = "rating")
+    private BigDecimal  rating;
 }

@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "cosmetic_items")
@@ -23,15 +25,17 @@ public class Cosmetic_items {
     @Column(name = "item_name", nullable = false, length = 100)
     private String itemName;
 
-    // FK как простые поля
     @Column(name = "manufacturer_id")
     private Integer manufacturerId;
 
-    @Column(name = "brand_id")
-    private Integer brandId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "brand_id", insertable = false, updatable = false)
+    private Brands brand;
 
-    @Column(name = "cosmetic_type_id")
-    private Integer cosmeticTypeId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cosmetic_type_id", insertable = false, updatable = false)
+    private Cosmetic_types cosmeticType;
 
     @Column(name = "certificate_id")
     private Integer certificateId;
@@ -50,4 +54,11 @@ public class Cosmetic_items {
 
     @Column(name = "price", precision = 10, scale = 2)
     private BigDecimal price;
+
+    @OneToMany(mappedBy = "cosmeticItem", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Favourites> favourites = new ArrayList<>();
+
+    @OneToMany(mappedBy = "cosmeticItem", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<Comments> comments = new ArrayList<>();
+
 }

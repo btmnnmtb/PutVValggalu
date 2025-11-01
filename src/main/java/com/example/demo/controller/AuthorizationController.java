@@ -33,16 +33,22 @@ public class AuthorizationController {
         return "registration";
     }
     @PostMapping("/registration")
-    public String registerUser(@Valid @ModelAttribute("user") User user ,
-                               BindingResult bindingResult ,
-                               Model model) {
+    public String registerUser(
+            @Valid @ModelAttribute("user") User user,
+            BindingResult bindingResult,
+            Model model
+    ) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("roles" , rolesRepository.findAll());
+            model.addAttribute("roles", rolesRepository.findAll());
             return "registration";
         }
-        Roles autorole = rolesRepository.findByRoleName("Пользователь").orElseThrow(() -> new IllegalArgumentException("Invalid role ID"));
+
+        Roles autorole = rolesRepository.findByRoleName("Пользователь")
+                .orElseThrow(() -> new IllegalArgumentException("Роль не найдена"));
         user.setRole(autorole);
-        authService.registerUser(user.getLogin() , user.getPasswordHash() , autorole.getRoleName());
+
+        authService.registerUser(user.getLogin(), user.getRawPassword(), autorole.getRoleName());
+
         return "redirect:/login";
     }
     @GetMapping("/login")
