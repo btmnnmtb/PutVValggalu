@@ -24,14 +24,14 @@ public class CartService {
 
     @Transactional
     public void addCart(Integer cosmetic_item_id, String username , int quantity) {
-        User user = usersRepository.findByLogin(username).orElseThrow(()-> new RuntimeException("user not found"));
+        User user = usersRepository.findByLogin(username).orElseThrow(()-> new RuntimeException("Пользоватлеь не найден"));
         Carts carts = cartRepository.findByUser_UserId(user.getUserId())
                 .orElseGet(()-> {
                     Carts Newcart = Carts.builder().user(user).build();
                     return cartRepository.save(Newcart);
 
                 });
-        Cosmetic_items cosmeticItems = cosmeticItemRepository.findById(cosmetic_item_id).orElseThrow(()-> new RuntimeException("cosmetic item not found"));
+        Cosmetic_items cosmeticItems = cosmeticItemRepository.findById(cosmetic_item_id).orElseThrow(()-> new RuntimeException("товар не найден"));
         if (cosmeticItems.getQuantity() <= 0) {
             throw new RuntimeException("Товар закончился на складе");
         }
@@ -53,7 +53,7 @@ public class CartService {
         cosmeticItemRepository.save(cosmeticItems);
     }
     public Carts getCart(String username){
-        User user = usersRepository.findByLogin(username).orElseThrow(()-> new RuntimeException("user not found"));
+        User user = usersRepository.findByLogin(username).orElseThrow(()-> new RuntimeException("пользователь на найден"));
         return cartRepository.findByUser_UserId(user.getUserId()).orElseGet(()->{
             Carts newcarts = Carts.builder().user(user).build();
             return cartRepository.save(newcarts);
@@ -61,15 +61,15 @@ public class CartService {
     }
     public void removeAllOfItem(String username, Integer cartItemId) {
         var user = usersRepository.findByLogin(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
         var cart = cartRepository.findByUser_UserId(user.getUserId())
-                .orElseThrow(() -> new RuntimeException("Basket is empty"));
+                .orElseThrow(() -> new RuntimeException("Коризна пуста"));
 
         var item = cart.getCartItems().stream()
                 .filter(ci -> ci.getCartItemId().equals(cartItemId))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Item not found"));
+                .orElseThrow(() -> new RuntimeException("Товар не найден"));
 
         int qty = item.getQuantity();
         var product = item.getCosmetic_items();
@@ -83,15 +83,15 @@ public class CartService {
     @Transactional
     public void incrementOne(String username, Integer cartItemId) {
         var user = usersRepository.findByLogin(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
         var cart = cartRepository.findByUser_UserId(user.getUserId())
-                .orElseThrow(() -> new RuntimeException("Basket is empty"));
+                .orElseThrow(() -> new RuntimeException("Корзина пуста"));
 
         var item = cart.getCartItems().stream()
                 .filter(ci -> ci.getCartItemId().equals(cartItemId))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Item not found"));
+                .orElseThrow(() -> new RuntimeException("Товар не найден"));
 
         var product = item.getCosmetic_items();
         if (product.getQuantity() <= 0) {
@@ -107,15 +107,15 @@ public class CartService {
     @Transactional
     public void decrementOne(String username, Integer cartItemId) {
         var user = usersRepository.findByLogin(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("Пользователь на найден"));
 
         var cart = cartRepository.findByUser_UserId(user.getUserId())
-                .orElseThrow(() -> new RuntimeException("Basket is empty"));
+                .orElseThrow(() -> new RuntimeException("Корзина пуста"));
 
         var item = cart.getCartItems().stream()
                 .filter(ci -> ci.getCartItemId().equals(cartItemId))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Item not found"));
+                .orElseThrow(() -> new RuntimeException("Товар не найден"));
 
         var product = item.getCosmetic_items();
         if (item.getQuantity() > 1) {
@@ -127,6 +127,23 @@ public class CartService {
         }
         product.setQuantity(product.getQuantity() + 1);
         cosmeticItemRepository.save(product);
+    }
+    @Transactional
+    public void clearCart(String username) {
+        var user = usersRepository.findByLogin(username)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+        var cart = cartRepository.findByUser_UserId(user.getUserId())
+                .orElseThrow(() -> new RuntimeException("Корзина пуста"));
+
+        for (var item : cart.getCartItems()) {
+            var product = item.getCosmetic_items();
+            product.setQuantity(product.getQuantity() + item.getQuantity());
+            cosmeticItemRepository.save(product);
+        }
+
+        cartsItemRepository.deleteAll(cart.getCartItems());
+        cart.getCartItems().clear();
+        cartRepository.save(cart);
     }
 
 

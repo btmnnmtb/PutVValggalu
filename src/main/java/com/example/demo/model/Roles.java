@@ -1,5 +1,6 @@
 package com.example.demo.model;
 
+import com.fasterxml.jackson.annotation.*;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,5 +24,6 @@ public class Roles {
     private String roleName;
 
     @OneToMany(mappedBy = "role")
+    @JsonIgnore
     private List<User> users;
 }

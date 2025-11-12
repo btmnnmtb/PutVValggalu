@@ -50,4 +50,9 @@ public class CosmeticView {
     private String statusName;
     @Column(name = "rating")
     private BigDecimal  rating;
+    @Column(name = "moderation_note")
+    private String moderationNote;
+
+    public interface NameCount { String getName(); Long getCnt(); }
+    public interface NameSum { String getName(); BigDecimal getSum(); }
 }

@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<html lang="ru">
 <html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <head>
 
@@ -612,24 +611,34 @@
     </div>
 
     <div class="orders-controls">
-        <div class="controls-grid">
-            <input type="text" class="search-box" placeholder="🔍 Поиск по номеру заказа или товару...">
-            <select class="filter-select">
-                <option value="">Все статусы</option>
-                <option value="processing">В обработке</option>
-                <option value="shipped">В доставке</option>
-                <option value="delivered">Доставлено</option>
-                <option value="cancelled">Отменено</option>
-            </select>
-            <select class="filter-select">
-                <option value="">За все время</option>
-                <option value="week">За неделю</option>
-                <option value="month">За месяц</option>
-                <option value="year">За год</option>
-            </select>
-            <button class="filter-btn">Применить фильтры</button>
-        </div>
+        <form method="get" th:action="@{/orders}">
+            <div class="controls-grid">
+                <input name="q" type="text" class="search-box"
+                       placeholder="🔍 По номеру заказа или товару..."
+                       th:value="${q}">
+
+                <select name="status" class="filter-select">
+                    <option value="" th:selected="${status} == null or ${status} == ''">Все статусы</option>
+
+                    <option th:each="s : ${statuses}"
+                            th:value="${s.orderStatus}"
+                    th:text="${s.orderStatus}"
+                    th:selected="${status} == s.orderStatus}">
+                    </option>
+                </select>
+
+                <select name="period" class="filter-select" th:value="${period}">
+                    <option value="">За все время</option>
+                    <option value="week">За неделю</option>
+                    <option value="month">За месяц</option>
+                    <option value="year">За год</option>
+                </select>
+
+                <button class="filter-btn" type="submit">Применить фильтры</button>
+            </div>
+        </form>
     </div>
+
 
     <div class="orders-list" th:if="${!#lists.isEmpty(orders)}">
         <div class="order-card" th:each="o : ${orders}">

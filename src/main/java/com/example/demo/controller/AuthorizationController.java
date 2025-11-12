@@ -38,6 +38,7 @@ public class AuthorizationController {
             BindingResult bindingResult,
             Model model
     ) {
+
         if (bindingResult.hasErrors()) {
             model.addAttribute("roles", rolesRepository.findAll());
             return "registration";

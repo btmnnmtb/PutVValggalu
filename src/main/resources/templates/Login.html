@@ -1,97 +1,159 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Вход</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Вход — Glamour</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f6f9;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+        :root{
+          --bg1:#f5f7fa; --bg2:#c3cfe2;
+          --primary:#e91e63; --primary-dark:#c2185b;
+          --ok:#28a745; --ok-dark:#218838;
+          --text:#333; --muted:#6b7280;
+          --card:#ffffff; --ring:#e5e7eb;
+          --shadow:0 10px 30px rgba(0,0,0,.08);
         }
-        .form-container {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            width: 350px;
+
+        /* фон + место под фикс-хедер */
+        body{
+          margin:0; font-family:Arial, sans-serif; color:var(--text);
+          background:linear-gradient(135deg,var(--bg1) 0%,var(--bg2) 100%);
         }
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-            color: #333;
+        .page{
+          min-height:100svh; padding-top:80px;
+          display:grid; place-items:center;
         }
-        label {
-            display: block;
-            margin-top: 10px;
-            font-weight: bold;
+
+        /* карточка */
+        .card{
+          width:min(94vw,420px);
+          background:var(--card);
+          border-radius:16px;
+          box-shadow:var(--shadow);
+          padding:28px 24px;
+          position:relative;
+          overflow:hidden;
         }
-        input {
-            width: 100%;
-            padding: 10px;
-            margin-top: 6px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
+        .card::before{
+          content:""; position:absolute; inset:auto -40% 0 -40%; height:120px;
+          background:radial-gradient(60% 80% at 50% 100%, rgba(233,30,99,.10), transparent 70%);
+          pointer-events:none;
         }
-        .error {
-            color: red;
-            text-align: center;
-            margin-bottom: 10px;
+
+        /* шапка карточки */
+        .brand{
+          display:flex; align-items:center; gap:10px; margin-bottom:6px;
         }
-        button {
-            width: 100%;
-            padding: 12px;
-            margin-top: 20px;
-            border: none;
-            border-radius: 8px;
-            background: #28a745;
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background 0.3s;
+        .brand__logo{ font-size:24px; font-weight:800; color:var(--primary); letter-spacing:.3px; }
+        .brand__tag{ font-size:12px; color:var(--muted) }
+
+        h1{ font-size:22px; margin:6px 0 18px; }
+
+        /* форма */
+        .field{ margin-top:12px; }
+        .label{ display:block; font-weight:700; font-size:13px; margin:0 0 6px; color:#374151; }
+        .input{
+          width:100%; padding:12px 14px; border:1px solid var(--ring); border-radius:10px;
+          font-size:15px; outline:0; transition:box-shadow .2s, border-color .2s, transform .04s;
+          background:#fff;
         }
-        button:hover {
-            background: #218838;
+        .input:focus{ border-color:var(--primary); box-shadow:0 0 0 3px rgba(233,30,99,.15); }
+        .row{ display:flex; gap:10px; align-items:center; justify-content:space-between; margin-top:10px; }
+        .muted{ color:var(--muted); font-size:13px; text-decoration:none; }
+        .muted:hover{ text-decoration:underline; }
+
+        .btn{
+          width:100%; padding:12px; border:0; border-radius:10px; cursor:pointer;
+          color:#fff; font-weight:700; font-size:16px; margin-top:16px;
+          background:linear-gradient(135deg,var(--ok),var(--ok-dark));
+          box-shadow:0 8px 22px rgba(40,167,69,.25);
+          transition:transform .08s ease, filter .2s;
         }
-        .link-btn {
-            margin-top: 15px;
-            width: 100%;
-            background: #6c757d;
+        .btn:hover{ filter:brightness(1.03); }
+        .btn:active{ transform:translateY(1px); }
+
+        .btn-alt{
+          display:inline-block; width:100%; text-align:center; padding:12px; margin-top:10px;
+          background:#111827; color:#fff; border-radius:10px; text-decoration:none;
+          box-shadow:0 8px 22px rgba(17,24,39,.18);
         }
-        .link-btn:hover {
-            background: #5a6268;
+        .btn-alt:hover{ filter:brightness(1.05); }
+
+        /* ошибки */
+        .error{
+          margin:6px 0 0; color:#c62828; font-size:13px;
+        }
+        .error-banner{
+          background:#fff5f5; border:1px solid #fecaca; color:#b91c1c;
+          padding:10px 12px; border-radius:10px; margin-bottom:10px; font-size:14px; text-align:center;
+        }
+
+        /* подсказка внизу */
+        .footnote{
+          text-align:center; font-size:13px; color:var(--muted); margin-top:12px;
+        }
+        .link{ color:var(--primary); text-decoration:none; font-weight:700; }
+        .link:hover{ color:var(--primary-dark); text-decoration:underline; }
+
+        /* мобильные детали */
+        @media (max-width:480px){
+          .card{ padding:24px 18px; border-radius:14px; }
+          h1{ font-size:20px; }
         }
     </style>
 </head>
 <body>
-<div class="form-container">
-    <h2>Авторизация</h2>
 
-    <div th:if="${errorMessage}" style="color:red; margin-bottom:10px;">
-        <p th:text="${errorMessage}"></p>
-    </div>
+<header>
+    <div th:replace="~{fragments :: headerFragment(${role} ?: 'Гость', ${username} ?: 'Гость')}"></div>
+</header>
 
-    <form th:action="@{/login}" method="post">
+<main class="page">
+    <section class="card" aria-labelledby="login-title">
+        <div class="brand">
+            <div class="brand__logo">Glamour</div>
+            <div class="brand__tag">вход в аккаунт</div>
+        </div>
 
+        <h1 id="login-title">Авторизация</h1>
 
-        <label for="username">Логин:</label>
-        <input type="text" id="username" name="username" required>
-        <br><br>
+        <div th:if="${errorMessage}" class="error-banner" th:text="${errorMessage}">Неверный логин или пароль</div>
 
-        <label for="password">Пароль:</label>
-        <input type="password" id="password" name="password" required>
-        <br><br>
+        <form th:action="@{/login}" method="post" novalidate>
+            <div class="field">
+                <label for="username" class="label">Логин</label>
+                <input class="input" type="text" id="username" name="username" autocomplete="username" required>
+            </div>
 
-        <button type="submit">Войти</button>
-    </form>
+            <div class="field">
+                <label for="password" class="label">Пароль</label>
+                <input class="input" type="password" id="password" name="password" autocomplete="current-password" required>
+            </div>
 
+            <div class="row">
+                <label class="muted"><input type="checkbox" id="showpass"> показать пароль</label>
+                <a class="muted" th:href="@{/ForgotPassword}" tabindex="0">Забыли пароль?</a>
+            </div>
 
-    <a th:href="@{/registration}">
-        <button type="button" class="link-btn">Регистрация</button>
-    </a>
-</div>
+            <button class="btn" type="submit">Войти</button>
+        </form>
+
+        <a class="btn-alt" th:href="@{/registration}">Создать аккаунт</a>
+
+    </section>
+</main>
+
+<script>
+    // Показ/скрытие пароля
+    document.addEventListener('DOMContentLoaded', () => {
+      const cb = document.getElementById('showpass');
+      const pwd = document.getElementById('password');
+      if (cb && pwd) cb.addEventListener('change', () => {
+        pwd.type = cb.checked ? 'text' : 'password';
+      });
+    });
+</script>
+
 </body>
 </html>

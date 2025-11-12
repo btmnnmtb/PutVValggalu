@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Склад - Пополнение заказов</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: 100vh; color: #333; }
+
+        /* Header стили */
+        .main-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem 0; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: fixed; top: 0; width: 100%; z-index: 1000; }
+        .nav-container { max-width: 1400px; margin: 0 auto; padding: 0 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.8rem; font-weight: 700; text-decoration: none; color: white; display: flex; align-items: center; gap: 0.5rem; }
+        .logo::before { content: '📦'; }
+        .user-info { font-size: 1rem; }
+        .user-info strong { font-weight: 600; }
+        .nav-links { display: flex; list-style: none; gap: 2rem; }
+        .nav-links a { color: white; text-decoration: none; font-weight: 500; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s; }
+        .nav-links a:hover { background: rgba(255,255,255,0.2); }
+
+        /* Основной контент */
+        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; padding-top: 100px; }
+        .page-header { text-align: center; margin-bottom: 3rem; color: #2d3748; }
+        .page-title { font-size: 3rem; font-weight: 300; margin-bottom: 1rem; position: relative; display: inline-block; }
+        .page-title::before { content: '📦'; position: absolute; left: -70px; top: 50%; transform: translateY(-50%); font-size: 2.5rem; }
+        .page-subtitle { font-size: 1.3rem; color: #718096; font-weight: 300; }
+
+        /* Статистика */
+        .admin-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background: white; padding: 2rem; border-radius: 16px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: transform 0.3s ease; position: relative; overflow: hidden; }
+        .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #667eea, #764ba2); }
+        .stat-card:hover { transform: translateY(-5px); }
+        .stat-icon { font-size: 2.5rem; margin-bottom: 1rem; display: block; }
+        .stat-number { font-size: 2.2rem; font-weight: 700; color: #2d3748; display: block; margin-bottom: 0.5rem; }
+        .stat-label { color: #718096; font-size: 0.95rem; font-weight: 500; }
+
+        /* Панель управления */
+        .admin-controls { background: white; border-radius: 20px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 15px 40px rgba(0,0,0,0.1); }
+        .controls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+        .control-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1rem; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4); text-decoration: none; text-align: center; }
+        .control-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6); }
+        .control-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+
+        /* Секция заказов */
+        .orders-section { background: white; border-radius: 20px; padding: 2rem; box-shadow: 0 15px 40px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+        .section-title { font-size: 1.8rem; font-weight: 600; margin-bottom: 1.5rem; color: #2d3748; display: flex; align-items: center; gap: 0.5rem; }
+        .section-title::before { content: '📋'; font-size: 1.5rem; }
+
+        /* Поиск и фильтры */
+        .search-filters { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+        .search-box, .filter-select { padding: 1rem 1.5rem; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 1rem; background: white; transition: all 0.3s ease; }
+        .search-box:focus, .filter-select:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        .filter-btn { padding: 1rem 2rem; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4); }
+        .filter-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6); }
+
+        /* Таблица заказов */
+        .orders-table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; }
+        .orders-table th { background: #f7fafc; padding: 1rem; text-align: left; font-weight: 600; color: #4a5568; border-bottom: 2px solid #e2e8f0; }
+        .orders-table td { padding: 1rem; border-bottom: 1px solid #e2e8f0; }
+        .order-row:hover { background: #f7fafc; }
+
+        /* Статусы заказов */
+        .order-status { display: inline-block; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem; font-weight: bold; }
+        .status-processing { background: #fff3e0; color: #ef6c00; }
+        .status-ready { background: #d1ecf1; color: #0c5460; }
+        .status-completed { background: #d4edda; color: #155724; }
+
+        /* Кнопки действий */
+        .action-buttons { display: flex; gap: 0.5rem; }
+        .btn { padding: 0.5rem 1rem; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 0.3rem; }
+        .btn-add { background: #e8f5e8; color: #2e7d32; border: 1px solid #a5d6a7; }
+        .btn-add:hover { background: #a5d6a7; }
+        .btn-details { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+        .btn-details:hover { background: #90caf9; }
+
+        /* Модальное окно пополнения */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-content { background: white; border-radius: 20px; padding: 2rem; width: 90%; max-width: 600px; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25); position: relative; animation: modalFadeIn 0.3s ease-out; max-height: 90vh; overflow-y: auto; }
+        @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #f7fafc; }
+        .modal-title { font-size: 1.5rem; font-weight: 600; color: #2d3748; }
+        .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #718096; }
+        .close-btn:hover { color: #2d3748; }
+
+        /* Форма пополнения */
+        .replenish-form { margin-top: 1rem; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #4a5568; }
+        .form-input, .form-select { width: 100%; padding: 0.8rem 1rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; transition: all 0.3s ease; }
+        .form-input:focus, .form-select:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .modal-actions { display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem; }
+        .btn-cancel { background: #f7fafc; color: #4a5568; border: 1px solid #e2e8f0; }
+        .btn-cancel:hover { background: #e2e8f0; }
+        .btn-save { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); }
+        .btn-save:hover { box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6); }
+
+        /* Адаптивность */
+        @media (max-width: 1200px) {
+            .admin-stats { grid-template-columns: repeat(2, 1fr); }
+            .search-filters { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .page-title { font-size: 2.2rem; }
+            .page-title::before { display: none; }
+            .orders-table { display: block; overflow-x: auto; }
+            .action-buttons { flex-direction: column; }
+            .modal-content { width: 95%; padding: 1.5rem; }
+            .form-row { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 480px) {
+            .admin-stats { grid-template-columns: 1fr; }
+            .controls-grid { grid-template-columns: 1fr; }
+            .nav-links { flex-direction: column; gap: 0.5rem; }
+        }
+    </style>
+</head>
+<body>
+<!-- Header для сотрудника склада -->
+<header class="main-header">
+    <nav class="nav-container">
+        <a href="/Set" class="logo">Glamour Склад</a>
+        <span class="user-info">
+                Добро пожаловать, <strong>Иванов А.С.</strong>
+            </span>
+        <ul class="nav-links">
+            <li><a href="/Set/approvals">Заявки</a></li>
+            <li><a href="/manager/OrderManager" class="active">Пополнение заказов</a></li>
+            <li><a href="/logout">Выйти</a></li>
+        </ul>
+    </nav>
+</header>
+
+<div class="container">
+    <div class="page-header">
+        <h1 class="page-title">Пополнение заказов</h1>
+        <p class="page-subtitle">Управление количеством товаров в заказах</p>
+    </div>
+
+    <div class="admin-stats">
+        <div class="stat-card">
+            <span class="stat-icon">📦</span>
+            <span class="stat-number" id="totalOrders">24</span>
+            <span class="stat-label">Всего заказов</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-icon">⏳</span>
+            <span class="stat-number" id="processingOrders">12</span>
+            <span class="stat-label">В обработке</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-icon">✅</span>
+            <span class="stat-number" id="completedOrders">8</span>
+            <span class="stat-label">Завершено сегодня</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-icon">📊</span>
+            <span class="stat-number" id="avgItems">5.2</span>
+            <span class="stat-label">Среднее кол-во позиций</span>
+        </div>
+    </div>
+
+    <div class="admin-controls">
+        <div class="controls-grid">
+            <button class="control-btn" type="button" onclick="filterOrders('all')">
+                <span class="control-icon">📋</span>Все заказы
+            </button>
+            <button class="control-btn" type="button" onclick="filterOrders('processing')">
+                <span class="control-icon">⏳</span>В обработке
+            </button>
+            <button class="control-btn" type="button" onclick="filterOrders('ready')">
+                <span class="control-icon">✅</span>Готовы к выдаче
+            </button>
+            <button class="control-btn" type="button" onclick="filterOrders('completed')">
+                <span class="control-icon">📦</span>Завершенные
+            </button>
+        </div>
+    </div>
+
+    <div class="orders-section">
+        <h2 class="section-title">Список заказов</h2>
+
+        <div class="search-filters">
+            <input type="text" class="search-box" placeholder="🔍 Поиск по номеру заказа или клиенту..." oninput="searchOrders(this.value)">
+            <select class="filter-select" id="dateFilter">
+                <option value="">За все время</option>
+                <option value="today">Сегодня</option>
+                <option value="week">За неделю</option>
+                <option value="month">За месяц</option>
+            </select>
+            <button class="filter-btn" onclick="applyFilters()">Применить фильтры</button>
+        </div>
+
+        <table class="orders-table">
+            <thead>
+            <tr>
+                <th>ID заказа</th>
+                <th>Клиент</th>
+                <th>Дата создания</th>
+                <th>Кол-во позиций</th>
+                <th>Общая сумма</th>
+                <th>Статус</th>
+                <th>Действия</th>
+            </tr>
+            </thead>
+            <tbody id="ordersTbody">
+            <!-- Заказы будут добавляться динамически -->
+            </tbody>
+        </table>
+
+        <div id="noOrdersMessage" style="text-align:center; color:#718096; padding:1rem; display:none;">
+            Заказы не найдены
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно пополнения заказа -->
+<div id="replenishModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Пополнение заказа</h3>
+            <button class="close-btn" type="button" onclick="closeReplenishModal()">×</button>
+        </div>
+
+        <div class="order-info">
+            <div class="detail-group">
+                <span class="detail-label">ID заказа:</span>
+                <div class="detail-value" id="modalOrderId">-</div>
+            </div>
+            <div class="detail-group">
+                <span class="detail-label">Клиент:</span>
+                <div class="detail-value" id="modalCustomer">-</div>
+            </div>
+        </div>
+
+        <form class="replenish-form" id="replenishForm">
+            <div class="form-group">
+                <label class="form-label" for="productSelect">Товар:</label>
+                <select class="form-select" id="productSelect" required>
+                    <option value="">Выберите товар</option>
+                    <!-- Товары будут добавляться динамически -->
+                </select>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="quantityInput">Количество:</label>
+                    <input type="number" class="form-input" id="quantityInput" min="1" value="1" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="priceInput">Цена за единицу (₽):</label>
+                    <input type="number" class="form-input" id="priceInput" min="0" step="0.01" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="commentInput">Комментарий:</label>
+                <input type="text" class="form-input" id="commentInput" placeholder="Необязательный комментарий...">
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-cancel" onclick="closeReplenishModal()">Отмена</button>
+                <button type="button" class="btn btn-save" onclick="addItemToOrder()">Добавить в заказ</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Данные для демонстрации (замените на данные из вашей БД)
+    const ordersData = [
+        {
+            id: 1001,
+            customer: "Петрова М.В.",
+            date: "2023-10-15 14:30",
+            items: 3,
+            total: 4500,
+            status: "processing",
+            itemsList: [
+                { id: 1, name: "Крем для лица", quantity: 1, price: 1500 },
+                { id: 2, name: "Шампунь", quantity: 2, price: 1500 }
+            ]
+        },
+        {
+            id: 1002,
+            customer: "Сидоров К.Д.",
+            date: "2023-10-15 12:15",
+            items: 5,
+            total: 7200,
+            status: "ready",
+            itemsList: [
+                { id: 1, name: "Тушь для ресниц", quantity: 2, price: 1200 },
+                { id: 2, name: "Помада", quantity: 3, price: 6000 }
+            ]
+        },
+        {
+            id: 1003,
+            customer: "Кузнецова Е.П.",
+            date: "2023-10-14 16:45",
+            items: 2,
+            total: 3200,
+            status: "completed",
+            itemsList: [
+                { id: 1, name: "Гель для душа", quantity: 1, price: 500 },
+                { id: 2, name: "Лосьон для тела", quantity: 1, price: 2700 }
+            ]
+        },
+        {
+            id: 1004,
+            customer: "Иванов А.С.",
+            date: "2023-10-14 10:20",
+            items: 4,
+            total: 5800,
+            status: "processing",
+            itemsList: [
+                { id: 1, name: "Дезодорант", quantity: 2, price: 800 },
+                { id: 2, name: "Крем для рук", quantity: 2, price: 5000 }
+            ]
+        }
+    ];
+
+    // Список доступных товаров
+    const availableProducts = [
+        { id: 1, name: "Крем для лица", price: 1500 },
+        { id: 2, name: "Шампунь", price: 750 },
+        { id: 3, name: "Тушь для ресниц", price: 600 },
+        { id: 4, name: "Помада", price: 2000 },
+        { id: 5, name: "Гель для душа", price: 500 },
+        { id: 6, name: "Лосьон для тела", price: 2700 },
+        { id: 7, name: "Дезодорант", price: 400 },
+        { id: 8, name: "Крем для рук", price: 2500 }
+    ];
+
+    let currentOrderId = null;
+    let currentFilter = 'all';
+
+    // Инициализация страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        renderOrders();
+        populateProductSelect();
+    });
+
+    // Заполнение выпадающего списка товаров
+    function populateProductSelect() {
+        const select = document.getElementById('productSelect');
+        select.innerHTML = '<option value="">Выберите товар</option>';
+
+        availableProducts.forEach(product => {
+            const option = document.createElement('option');
+            option.value = product.id;
+            option.textContent = `${product.name} - ${product.price} ₽`;
+            option.dataset.price = product.price;
+            select.appendChild(option);
+        });
+    }
+
+    // Обновление цены при выборе товара
+    document.getElementById('productSelect').addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        if (selectedOption.value) {
+            document.getElementById('priceInput').value = selectedOption.dataset.price;
+        } else {
+            document.getElementById('priceInput').value = '';
+        }
+    });
+
+    // Отображение заказов
+    function renderOrders() {
+        const tbody = document.getElementById('ordersTbody');
+        const noOrdersMessage = document.getElementById('noOrdersMessage');
+
+        // Очистка таблицы
+        tbody.innerHTML = '';
+
+        // Фильтрация заказов
+        let filteredOrders = ordersData;
+        if (currentFilter !== 'all') {
+            filteredOrders = ordersData.filter(order => order.status === currentFilter);
+        }
+
+        // Если заказов нет, показываем сообщение
+        if (filteredOrders.length === 0) {
+            noOrdersMessage.style.display = 'block';
+            return;
+        }
+
+        noOrdersMessage.style.display = 'none';
+
+        // Добавление заказов в таблицу
+        filteredOrders.forEach(order => {
+            const row = document.createElement('tr');
+            row.className = 'order-row';
+
+            // Определение класса статуса
+            let statusClass = '';
+            let statusText = '';
+
+            switch(order.status) {
+                case 'processing':
+                    statusClass = 'status-processing';
+                    statusText = 'В обработке';
+                    break;
+                case 'ready':
+                    statusClass = 'status-ready';
+                    statusText = 'Готов к выдаче';
+                    break;
+                case 'completed':
+                    statusClass = 'status-completed';
+                    statusText = 'Завершен';
+                    break;
+            }
+
+            row.innerHTML = `
+                <td>#${order.id}</td>
+                <td>${order.customer}</td>
+                <td>${order.date}</td>
+                <td>${order.items}</td>
+                <td>${order.total} ₽</td>
+                <td><span class="order-status ${statusClass}">${statusText}</span></td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn btn-details" onclick="viewOrderDetails(${order.id})">👁️ Детали</button>
+                        <button class="btn btn-add" onclick="openReplenishModal(${order.id})">➕ Добавить</button>
+                    </div>
+                </td>
+            `;
+
+            tbody.appendChild(row);
+        });
+    }
+
+    // Фильтрация заказов
+    function filterOrders(filter) {
+        currentFilter = filter;
+        renderOrders();
+    }
+
+    // Поиск заказов
+    function searchOrders(query) {
+        // В реальном приложении здесь будет запрос к серверу
+        console.log('Поиск:', query);
+        // Для демо просто перерисовываем все заказы
+        renderOrders();
+    }
+
+    // Применение фильтров
+    function applyFilters() {
+        const dateFilter = document.getElementById('dateFilter').value;
+        console.log('Фильтр по дате:', dateFilter);
+        renderOrders();
+    }
+
+    // Просмотр деталей заказа
+    function viewOrderDetails(id) {
+        const order = ordersData.find(o => o.id === id);
+        if (!order) return;
+
+        let detailsText = `Заказ #${order.id}\n`;
+        detailsText += `Клиент: ${order.customer}\n`;
+        detailsText += `Дата: ${order.date}\n`;
+        detailsText += `Статус: ${order.status}\n\n`;
+        detailsText += "Товары:\n";
+
+        order.itemsList.forEach(item => {
+            detailsText += `- ${item.name}: ${item.quantity} шт. x ${item.price} ₽ = ${item.quantity * item.price} ₽\n`;
+        });
+
+        detailsText += `\nИтого: ${order.total} ₽`;
+
+        alert(detailsText);
+    }
+
+    // Открытие модального окна пополнения
+    function openReplenishModal(id) {
+        const order = ordersData.find(o => o.id === id);
+        if (!order) return;
+
+        currentOrderId = id;
+
+        document.getElementById('modalOrderId').textContent = order.id;
+        document.getElementById('modalCustomer').textContent = order.customer;
+
+        // Сброс формы
+        document.getElementById('replenishForm').reset();
+        document.getElementById('quantityInput').value = 1;
+
+        document.getElementById('replenishModal').style.display = 'flex';
+    }
+
+    // Закрытие модального окна пополнения
+    function closeReplenishModal() {
+        document.getElementById('replenishModal').style.display = 'none';
+        currentOrderId = null;
+    }
+
+    // Добавление товара в заказ
+    function addItemToOrder() {
+        if (!currentOrderId) return;
+
+        const productSelect = document.getElementById('productSelect');
+        const quantityInput = document.getElementById('quantityInput');
+        const priceInput = document.getElementById('priceInput');
+        const commentInput = document.getElementById('commentInput');
+
+        const productId = parseInt(productSelect.value);
+        const quantity = parseInt(quantityInput.value);
+        const price = parseFloat(priceInput.value);
+        const comment = commentInput.value;
+
+        if (!productId || !quantity || !price) {
+            alert('Пожалуйста, заполните все обязательные поля');
+            return;
+        }
+
+        const product = availableProducts.find(p => p.id === productId);
+        if (!product) {
+            alert('Ошибка: товар не найден');
+            return;
+        }
+
+        // Здесь будет логика сохранения в БД
+        console.log(`Добавление в заказ ${currentOrderId}: ${product.name}, ${quantity} шт., ${price} ₽`);
+
+        // Обновляем данные в демо
+        const orderIndex = ordersData.findIndex(o => o.id === currentOrderId);
+        if (orderIndex !== -1) {
+            const order = ordersData[orderIndex];
+            order.items += 1;
+            order.total += quantity * price;
+
+            // Добавляем товар в список
+            order.itemsList.push({
+                id: productId,
+                name: product.name,
+                quantity: quantity,
+                price: price
+            });
+        }
+
+        closeReplenishModal();
+        renderOrders();
+        updateStats();
+
+        alert(`Товар "${product.name}" добавлен в заказ #${currentOrderId}!`);
+    }
+
+    // Обновление статистики
+    function updateStats() {
+        // В реальном приложении здесь будут актуальные данные
+        document.getElementById('totalOrders').textContent = ordersData.length;
+        document.getElementById('processingOrders').textContent = ordersData.filter(o => o.status === 'processing').length;
+        document.getElementById('completedOrders').textContent = ordersData.filter(o => o.status === 'completed').length;
+    }
+
+    // Закрытие модальных окон при клике вне их
+    window.onclick = function(event) {
+        const replenishModal = document.getElementById('replenishModal');
+
+        if (event.target === replenishModal) {
+            closeReplenishModal();
+        }
+    }
+</script>
+</body>
+</html>

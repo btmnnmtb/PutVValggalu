@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Склад - Одобрение заявок</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: 100vh; color: #333; padding-top: 80px; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+        .page-header { text-align: center; margin-bottom: 3rem; color: #2d3748; }
+        .page-title { font-size: 3rem; font-weight: 300; margin-bottom: 1rem; position: relative; display: inline-block; }
+        .page-title::before { content: '📦'; position: absolute; left: -70px; top: 50%; transform: translateY(-50%); font-size: 2.5rem; }
+        .page-subtitle { font-size: 1.3rem; color: #718096; font-weight: 300; }
+
+        /* Статистика */
+        .admin-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+
+    justify-content: center; /* центрирует всю сетку по горизонтали */
+}        .stat-card { background: white; padding: 2rem; border-radius: 16px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: transform 0.3s ease; position: relative; overflow: hidden; }
+        .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #667eea, #764ba2); }
+        .stat-card:hover { transform: translateY(-5px); }
+        .stat-icon { font-size: 2.5rem; margin-bottom: 1rem; display: block; }
+        .stat-number { font-size: 2.2rem; font-weight: 700; color: #2d3748; display: block; margin-bottom: 0.5rem; }
+        .stat-label { color: #718096; font-size: 0.95rem; font-weight: 500; }
+
+        /* Панель управления */
+        .admin-controls { background: white; border-radius: 20px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 15px 40px rgba(0,0,0,0.1); }
+        .controls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+        .control-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1rem; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4); text-decoration: none; text-align: center; }
+        .control-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6); }
+        .control-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+
+        /* Секция заявок */
+        .requests-section { background: white; border-radius: 20px; padding: 2rem; box-shadow: 0 15px 40px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+        .section-title { font-size: 1.8rem; font-weight: 600; margin-bottom: 1.5rem; color: #2d3748; display: flex; align-items: center; gap: 0.5rem; }
+        .section-title::before { content: '📋'; font-size: 1.5rem; }
+
+        /* Таблица заявок */
+        .requests-table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; }
+        .requests-table th { background: #f7fafc; padding: 1rem; text-align: left; font-weight: 600; color: #4a5568; border-bottom: 2px solid #e2e8f0; }
+        .requests-table td { padding: 1rem; border-bottom: 1px solid #e2e8f0; }
+        .request-row:hover { background: #f7fafc; }
+
+        /* Статусы заявок */
+        .request-status { display: inline-block; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem; font-weight: bold; }
+        .status-pending { background: #fff3e0; color: #ef6c00; }
+        .status-approved { background: #e8f5e8; color: #2e7d32; }
+        .status-rejected { background: #ffebee; color: #c62828; }
+
+        /* Кнопки действий */
+        .action-buttons { display: flex; gap: 0.5rem; }
+        .btn { padding: 0.5rem 1rem; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 0.3rem; }
+        .btn-approve { background: #e8f5e8; color: #2e7d32; border: 1px solid #a5d6a7; }
+        .btn-approve:hover { background: #a5d6a7; }
+        .btn-reject { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+        .btn-reject:hover { background: #ffcdd2; }
+        .btn-details { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+        .btn-details:hover { background: #90caf9; }
+
+        /* Модальное окно */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-content { background: white; border-radius: 20px; padding: 2rem; width: 90%; max-width: 700px; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25); position: relative; animation: modalFadeIn 0.3s ease-out; max-height: 90vh; overflow-y: auto; }
+        @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #f7fafc; }
+        .modal-title { font-size: 1.5rem; font-weight: 600; color: #2d3748; }
+        .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #718096; }
+        .close-btn:hover { color: #2d3748; }
+
+        .request-details { margin-bottom: 2rem; }
+        .detail-group { margin-bottom: 1.5rem; }
+        .detail-label { font-weight: 600; color: #4a5568; margin-bottom: 0.5rem; display: block; }
+        .detail-value { padding: 0.8rem 1rem; background: #f7fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
+
+        .approval-form { margin-top: 2rem; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #4a5568; }
+        .form-textarea { width: 100%; padding: 0.8rem 1rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; transition: all 0.3s ease; min-height: 100px; resize: vertical; }
+        .form-textarea:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        .modal-actions { display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem; }
+        .btn-cancel { background: #f7fafc; color: #4a5568; border: 1px solid #e2e8f0; }
+        .btn-cancel:hover { background: #e2e8f0; }
+        .btn-save { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); }
+        .btn-save:hover { box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6); }
+
+        /* Адаптивность */
+        @media (max-width: 1200px) { .admin-stats { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .page-title { font-size: 2.2rem; }
+            .page-title::before { display: none; }
+            .requests-table { display: block; overflow-x: auto; }
+            .action-buttons { flex-direction: column; }
+            .modal-content { width: 95%; padding: 1.5rem; }
+        }
+        @media (max-width: 480px) {
+            .admin-stats { grid-template-columns: 1fr; }
+            .controls-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments :: headerFragment(${role}, ${username})}"></div>
+<div class="container">
+    <div class="page-header">
+        <h1 class="page-title">Одобрение заявок</h1>
+        <p class="page-subtitle">Управление заявками на изменение и добавление товаров</p>
+    </div>
+
+    <div class="admin-stats">
+        <div class="stat-card">
+            <span class="stat-icon">📋</span>
+            <span class="stat-number" id="pendingRequests" th:text="${pendingCount}">0</span>
+            <span class="stat-label">Ожидают решения</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-icon">✅</span>
+            <span class="stat-number" id="approvedRequests" th:text="${approvedCount}">0</span>
+            <span class="stat-label">Одобрено</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-icon">❌</span>
+            <span class="stat-number" id="rejectedRequests" th:text="${rejectedCount}">0</span>
+            <span class="stat-label">Отклонено</span>
+        </div>
+
+    </div>
+
+    <div class="controls-grid">
+        <a class="control-btn" th:href="@{/Set/approvals}">
+            <span class="control-icon">📋</span>Все заявки
+        </a>
+        <a class="control-btn" th:href="@{/Set/approvals(filter='pending')}">
+            <span class="control-icon">⏳</span>Ожидающие решения
+        </a>
+        <a class="control-btn" th:href="@{/Set/approvals(filter='approved')}">
+            <span class="control-icon">✅</span>Одобренные
+        </a>
+        <a class="control-btn" th:href="@{/Set/approvals(filter='rejected')}">
+            <span class="control-icon">❌</span>Отклонённые
+        </a>
+    </div>
+    <div class="requests-section">
+        <h2 class="section-title">Заявки на изменения</h2>
+
+        <table class="requests-table">
+            <thead>
+            <tr>
+                <th>Тип заявки</th>
+                <th>Товар</th>
+                <th>Действия</th>
+            </tr>
+            </thead>
+            <tbody id="requestsTbody">
+            <tr class="request-row" th:each="r : ${requests}">
+                <td th:text="${r.statusName}">На рассмотрении</td>
+                <td th:text="${r.itemName}">Товар</td>
+                <td class="action-buttons">
+                    <button class="btn btn-details"
+                            type="button"
+                            th:data-id="${r.cosmeticItemId}"
+                            th:data-name="${r.itemName}"
+                            th:data-brand="${r.brandName}"
+                            th:data-type="${r.cosmeticTypeName}"
+                            th:data-manufacturer="${r.manufacturerName}"
+                            th:data-qty="${r.quantity}"
+                            th:data-status="${r.statusName}"
+                            th:data-note="${r.moderationNote}"
+                            onclick="openModal(this)">
+                        Подробнее
+                    </button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div id="noRequestsMessage" style="text-align:center; color:#718096; padding:1rem; display:none;">
+            Заявки не найдены
+        </div>
+    </div>
+</div>
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Детали заявки</h3>
+            <button class="close-btn" type="button" onclick="closeModal()">×</button>
+        </div>
+
+        <div class="request-details">
+            <div class="detail-group"><span class="detail-label">ID:</span><div class="detail-value" id="m-id">-</div></div>
+            <div class="detail-group"><span class="detail-label">Название:</span><div class="detail-value" id="m-name">-</div></div>
+            <div class="detail-group"><span class="detail-label">Бренд:</span><div class="detail-value" id="m-brand">-</div></div>
+            <div class="detail-group"><span class="detail-label">Производитель:</span><div class="detail-value" id="m-manufacturer">-</div></div>
+            <div class="detail-group"><span class="detail-label">Тип:</span><div class="detail-value" id="m-type">-</div></div>
+            <div class="detail-group"><span class="detail-label">Количество:</span><div class="detail-value" id="m-qty">-</div></div>
+            <div class="detail-group"><span class="detail-label">Статус:</span><div class="detail-value" id="m-status">-</div></div>
+            <div class="detail-group" id="m-note-wrap" style="display:none">
+                <span class="detail-label">Причина отказа:</span>
+                <div class="detail-value" id="m-note-text">-</div>
+            </div>
+
+            <form class="approval-form" id="approveForm" method="post">
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-cancel" onclick="closeModal()">Отмена</button>
+                    <button type="submit" class="btn btn-approve">Одобрить</button>
+                </div>
+            </form>
+
+            <form class="approval-form" id="rejectForm" method="post" style="margin-top:1rem">
+                <label class="form-label" for="m-note">Причина отказа (видит менеджер):</label>
+                <textarea class="form-textarea" id="m-note" name="note"
+                          placeholder="Коротко опишите, что нужно исправить"></textarea>
+                <div class="modal-actions" style="margin-top:1rem">
+                    <button type="submit" class="btn btn-delete">Отказать</button>
+                </div>
+            </form>
+        </div>
+        <form class="approval-form" id="supplyForm" method="post" style="display:none">
+            <div class="form-group">
+                <label class="form-label">Пополнить склад (шт.)</label>
+                <input type="number" name="qty" min="1" step="1" value="1" class="form-textarea" style="min-height:auto">
+            </div>
+            <div class="modal-actions">
+                <button type="submit" class="btn btn-save">Пополнить</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    const modal = document.getElementById('modal');
+    const approveForm = document.getElementById('approveForm');
+    const rejectForm  = document.getElementById('rejectForm');
+    const supplyForm  = document.getElementById('supplyForm');
+
+    const noteWrap = document.getElementById('m-note-wrap');
+    const noteText = document.getElementById('m-note-text');
+
+    function openModal(btn) {
+      const id = btn.dataset.id;
+      const status = (btn.dataset.status || '').trim();
+      const note = (btn.dataset.note || '').trim();
+
+      document.getElementById('m-id').textContent = id;
+      document.getElementById('m-name').textContent = btn.dataset.name || '-';
+      document.getElementById('m-brand').textContent = btn.dataset.brand || '-';
+      document.getElementById('m-manufacturer').textContent = btn.dataset.manufacturer || '-';
+      document.getElementById('m-type').textContent = btn.dataset.type || '-';
+      document.getElementById('m-qty').textContent = btn.dataset.qty || '-';
+      document.getElementById('m-status').textContent = status || '-';
+
+      // URL-ы действий:
+      approveForm.action = `/Set/approvals/${id}/approve`;
+      rejectForm.action  = `/Set/approvals/${id}/reject`;
+      supplyForm.action  = `/Set/approvals/${id}/supply`;
+
+      // Сначала всё прячем
+      approveForm.style.display = 'none';
+      rejectForm.style.display  = 'none';
+      supplyForm.style.display  = 'none';
+      noteWrap.style.display    = 'none';
+
+      if (status === 'Одобрен') {
+        approveForm.style.display = 'block';
+        supplyForm.style.display  = 'block';
+      } else if (status === 'Отказ(Переделать)') {
+        noteText.textContent = note || 'Причина не указана';
+        noteWrap.style.display = 'block';
+      } else {
+        approveForm.style.display = 'block';
+        rejectForm.style.display  = 'block';
+      }
+
+      modal.style.display = 'flex';
+    }
+
+    function closeModal() { modal.style.display = 'none'; }
+    window.onclick   = e => { if (e.target === modal) closeModal(); };
+    window.onkeydown = e => { if (e.key === 'Escape') closeModal(); };
+</script>
+
+</body>
+</html>

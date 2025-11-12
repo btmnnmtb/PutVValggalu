@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -18,15 +19,28 @@ public class AuthService {
     private UsersRepository usersRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
-    public User registerUser(String username, String rawPassword , String rrole){
-        Roles roles = rolesRepository.findByRoleName(rrole)
-                .orElseThrow(() -> new RuntimeException("Роль не найдена: " + rrole));
 
-        User user = new User();
-        user.setLogin(username);
+    final private AuditLogService auditLogService;
+
+    @Transactional
+    public User registerUser(String username, String rawPassword , String roleName){
+        var role = rolesRepository.findByRoleName(roleName)
+                .orElseThrow(() -> new RuntimeException("Роль не найдена: " + roleName));
+
+        var user = new User();
+        user.setLogin(username.trim());
         user.setPasswordHash(passwordEncoder.encode(rawPassword));
-        user.setRole(roles);
-        return usersRepository.save(user);
+        user.setRole(role);
+
+        usersRepository.saveAndFlush(user);
+
+        var details = com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.objectNode()
+                .put("login", user.getLogin())
+                .put("role", role.getRoleName());
+
+        auditLogService.log("Зарегистрироваля", user, user, details);
+
+        return user;
     }
 
 }

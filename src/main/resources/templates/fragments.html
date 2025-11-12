@@ -3,7 +3,6 @@
 <head></head>
 <body>
 
-<!-- Универсальный фрагмент: выбирает вариант хедера по роли -->
 <div th:fragment="headerFragment(role, username)">
     <div th:switch="${role}">
         <!-- Администратор -->
@@ -25,7 +24,7 @@
         </div>
 
         <!-- Менеджер -->
-        <div th:case="'Менеджер'">
+        <div th:case="'Менаджер'">
             <header class="main-header manager-header">
                 <nav class="nav-container">
                     <a href="/manager" class="logo manager-logo">Glamour Manager</a>
@@ -33,18 +32,46 @@
             Добро пожаловать, <strong th:text="${username}">User</strong>
           </span>
                     <ul class="nav-links manager-nav">
-                        <li><a href="/ManagerPage">Товары</a></li>
-                        <li><a href="/manager/orders">Заказы</a></li>
-                        <li><a href="/manager/inventory">Склад</a></li>
-                        <li><a href="/manager/reports">Отчеты</a></li>
-                        <li><a href="/Welcome">Сайт</a></li>
+                        <li><a href="/manager/ManagerPage">Панель для менаджреа</a></li>
+                        <li><a href="/manager/OrderManager">Заказы</a></li>
+                        <li><a href="/logout">Выйти</a></li>
+                    </ul>
+                </nav>
+            </header>
+        </div>
+        <div th:case="'Сотрудник склада'">
+            <header class="main-header manager-header">
+                <nav class="nav-container">
+                    <a href="/Set/approvals" class="logo manager-logo">Glamour SET</a>
+                    <span class="user-info manager-user-info">
+            Добро пожаловать, <strong th:text="${username}">User</strong>
+          </span>
+                    <ul class="nav-links manager-nav">
+                        <li><a href="/Set/approvals">Заявки</a></li>
+                        <li><a href="/logout">Выйти</a></li>
+                    </ul>
+                </nav>
+            </header>
+        </div>
+        <div th:case="'Пользователь'">
+            <header class="main-header user-header">
+                <nav class="nav-container">
+                    <a href="/MainWindow" class="logo">Glamour</a>
+                    <span class="user-info">
+                        Добро пожаловать, <strong th:text="${username}">User</strong>
+                    </span>
+                    <ul class="nav-links">
+                        <li><a href="/MainWindow">Главная</a></li>
+                        <li><a href="/Catalog">Каталог</a></li>
+                        <li><a href="/Cart">Корзина</a></li>
+                        <li><a href="/favourites">Избранное</a></li>
+                        <li><a href="/orders">Заказы</a></li>
                         <li><a href="/logout">Выйти</a></li>
                     </ul>
                 </nav>
             </header>
         </div>
 
-        <!-- Пользователь (по умолчанию) -->
         <div th:case="*">
             <header class="main-header user-header">
                 <nav class="nav-container">
@@ -55,11 +82,8 @@
                     <ul class="nav-links">
                         <li><a href="/MainWindow">Главная</a></li>
                         <li><a href="/Catalog">Каталог</a></li>
-                        <li><a href="/brands">Бренды</a></li>
-                        <li><a href="/Cart">Корзина</a></li>
-                        <li><a href="/favourites">Избранное</a></li>
-                        <li><a href="/orders">Заказы</a></li>
-                        <li><a href="/logout">Выйти</a></li>
+                        <li><a href="/Login">Войти</a></li>
+                        <li><a href="/Registration">Зарегистрироваться</a></li>
                     </ul>
                 </nav>
             </header>
@@ -68,4 +92,21 @@
 </div>
 
 </body>
+<style>
+    .hk-badge{
+      display:inline-block; margin-left:.35rem; padding:.1rem .3rem;
+      border:1px solid #e5e7eb; border-radius:.4rem; font: 12px/1.1 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background:#f9fafb; color:#374151; vertical-align:middle;
+    }
+    .hk-help{
+      position:fixed; right:16px; bottom:16px; background:#111827; color:#fff;
+      padding:10px 12px; border-radius:10px; box-shadow:0 10px 20px rgba(0,0,0,.15);
+      font: 13px/1.3 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; opacity:.9;
+    }
+    .hk-help kbd{background:#fff; color:#111827; padding:2px 5px; border-radius:6px; border:1px solid #e5e7eb}
+    .hk-help.hidden{display:none}
+</style>
+
+
+
 </html>

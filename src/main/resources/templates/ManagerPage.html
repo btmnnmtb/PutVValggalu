@@ -1,10 +1,629 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Менеджер товаров</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: 100vh; color: #333; padding-top: 80px; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+        .page-header { text-align: center; margin-bottom: 3rem; color: #2d3748; }
+        .page-title { font-size: 3rem; font-weight: 300; margin-bottom: 1rem; position: relative; display: inline-block; }
+        .page-title::before { content: '📦'; position: absolute; left: -70px; top: 50%; transform: translateY(-50%); font-size: 2.5rem; }
+        .page-subtitle { font-size: 1.3rem; color: #718096; font-weight: 300; }
+        .admin-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background: white; padding: 2rem; border-radius: 16px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: transform 0.3s ease; position: relative; overflow: hidden; }
+        .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #667eea, #764ba2); }
+        .stat-card:hover { transform: translateY(-5px); }
+        .stat-icon { font-size: 2.5rem; margin-bottom: 1rem; display: block; }
+        .stat-number { font-size: 2.2rem; font-weight: 700; color: #2d3748; display: block; margin-bottom: 0.5rem; }
+        .stat-label { color: #718096; font-size: 0.95rem; font-weight: 500; }
+        .admin-controls { background: white; border-radius: 20px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 15px 40px rgba(0,0,0,0.1); }
+        .controls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+        .control-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1rem; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4); text-decoration: none; text-align: center; }
+        .control-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6); }
+        .control-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+        .products-section { background: white; border-radius: 20px; padding: 2rem; box-shadow: 0 15px 40px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+        .section-title { font-size: 1.8rem; font-weight: 600; margin-bottom: 1.5rem; color: #2d3748; display: flex; align-items: center; gap: 0.5rem; }
+        .section-title::before { content: '📦'; font-size: 1.5rem; }
+        .search-box { width: 100%; padding: 1rem 1.5rem; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 1rem; background: white; transition: all 0.3s ease; margin-bottom: 1.5rem; }
+        .search-box:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        .products-table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; }
+        .products-table th { background: #f7fafc; padding: 1rem; text-align: left; font-weight: 600; color: #4a5568; border-bottom: 2px solid #e2e8f0; }
+        .products-table td { padding: 1rem; border-bottom: 1px solid #e2e8f0; }
+        .product-row:hover { background: #f7fafc; }
+        .product-image { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; margin-right: 0.5rem; vertical-align: middle; }
+        .product-placeholder { width: 60px; height: 60px; border-radius: 8px; background: linear-gradient(135deg, #667eea, #764ba2); display: inline-flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; margin-right: 0.5rem; vertical-align: middle; }
+        .product-status { display: inline-block; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem; font-weight: bold; }
+        .status-in-stock { background: #e8f5e8; color: #2e7d32; }
+        .status-low-stock { background: #fff3e0; color: #ef6c00; }
+        .status-out-of-stock { background: #ffebee; color: #c62828; }
+        .action-buttons { display: flex; gap: 0.5rem; }
+        .btn { padding: 0.5rem 1rem; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 0.3rem; }
+        .btn-edit { background: #fff3e0; color: #ef6c00; border: 1px solid #ffcc80; }
+        .btn-edit:hover { background: #ffcc80; }
+        .btn-delete { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+        .btn-delete:hover { background: #ffcdd2; }
+        .btn-add { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 0.8rem 1.5rem; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); border: none; display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 1rem; }
+        .btn-add:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6); }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-content { background: white; border-radius: 20px; padding: 2rem; width: 90%; max-width: 600px; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25); position: relative; animation: modalFadeIn 0.3s ease-out; max-height: 90vh; overflow-y: auto; }
+        @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #f7fafc; }
+        .modal-title { font-size: 1.5rem; font-weight: 600; color: #2d3748; }
+        .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #718096; }
+        .close-btn:hover { color: #2d3748; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #4a5568; }
+        .form-input, .form-textarea, .form-select { width: 100%; padding: 0.8rem 1rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; transition: all 0.3s ease; }
+        .form-textarea { min-height: 100px; resize: vertical; }
+        .form-input:focus, .form-textarea:focus, .form-select:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        .form-select { background: white; cursor: pointer; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .modal-actions { display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem; }
+        .btn-cancel { background: #f7fafc; color: #4a5568; border: 1px solid #e2e8f0; }
+        .btn-cancel:hover { background: #e2e8f0; }
+        .btn-save { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); }
+        .btn-save:hover { box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6); }
+        @media (max-width: 1200px) { .admin-stats { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 768px) { .container { padding: 1rem; } .page-title { font-size: 2.2rem; } .page-title::before { display: none; } .products-table { display: block; overflow-x: auto; } .action-buttons { flex-direction: column; } .modal-content { width: 95%; padding: 1.5rem; } .form-row { grid-template-columns: 1fr; } }
+        @media (max-width: 480px) { .admin-stats { grid-template-columns: 1fr; } .controls-grid { grid-template-columns: 1fr; } }
+    </style>
 </head>
 <body>
+<div style="display:none">[ROLE=<span th:text="${role}">?</span>]</div>
+<div th:replace="~{fragments :: headerFragment(${role}, ${username})}"></div>
+<div class="container">
+    <div class="page-header">
+        <h1 class="page-title">Менеджер товаров</h1>
+        <p class="page-subtitle">Управление каталогом продукции</p>
+    </div>
+    <div class="admin-stats">
+        <!-- Всего SKU -->
+        <div class="stat-card">
+            <span class="stat-icon">📦</span>
+            <span class="stat-number"
+                  th:text="${stats != null ? stats.totalSkus : 0}">0</span>
+            <span class="stat-label">Всего товаров (SKU)</span>
+        </div>
 
+        <!-- Общая стоимость -->
+        <div class="stat-card">
+            <span class="stat-icon">💰</span>
+            <span class="stat-number"
+                  th:text="${stats != null ? (#numbers.formatDecimal(stats.totalValue, 1, 'COMMA', 2, 'POINT') + ' ₽') : '0 ₽'}">
+    0 ₽
+  </span>
+            <span class="stat-label">Общая стоимость на складе</span>
+        </div>
+
+        <!-- В наличии (>10) -->
+        <div class="stat-card">
+            <span class="stat-icon">✅</span>
+            <span class="stat-number"
+                  th:text="${stats != null ? stats.inStockSkus : 0}">0</span>
+            <span class="stat-label">SKU в наличии (&gt; 10 шт)</span>
+            <div class="stat-sub"
+                 th:text="${stats != null ? 'Σ количество: ' + stats.inStockQty : 'Σ количество: 0'}">
+                Σ количество: 0
+            </div>
+        </div>
+
+        <!-- Мало в наличии (≤10) -->
+        <div class="stat-card">
+            <span class="stat-icon">⚠️</span>
+            <span class="stat-number"
+                  th:text="${stats != null ? stats.lowStockSkus : 0}">0</span>
+            <span class="stat-label">Мало в наличии (≤ 10 шт)</span>
+            <div class="stat-sub"
+                 th:text="${stats != null ? 'Σ количество: ' + stats.lowStockQty : 'Σ количество: 0'}">
+                Σ количество: 0
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-controls">
+        <div class="controls-grid">
+            <button  id="btnAdd" class="control-btn" type="button" onclick="openAddProductModal()">
+                <span class="control-icon">➕</span>Добавить товар
+            </button>
+            <a id="allcvs" class="control-btn" href="/manager/reports/export/all.zip">
+                <span class="control-icon">🔄</span>Экспорт
+            </a>
+        </div>
+    </div>
+    <div class="products-section">
+        <h2 class="section-title">Управление товарами</h2>
+        <input id="searchInput" type="text" class="search-box" placeholder="🔍 Поиск товаров..." oninput="filterProducts(this.value)">
+        <table class="products-table">
+            <thead>
+            <tr>
+                <th>Товар</th>
+                <th>Категория</th>
+                <th>Цена</th>
+                <th>Количество</th>
+                <th>Статус количества</th>
+                <th>Статус товара</th>
+                <th>Стаутс заявки</th>
+                <th>Действия</th>
+            </tr>
+            </thead>
+            <tbody id="productsTbody">
+            <tr class="product-row"
+                th:each="it : ${items}"
+                th:attr="
+  data-id=${it.cosmeticItemId},
+  data-name=${it.itemName},
+  data-price=${it.price},
+  data-qty=${it.quantity},
+  data-type-name=${it.cosmeticTypeName},
+  data-brand-name=${it.brandName},
+  data-manufacturer-name=${it.manufacturerName},
+  data-certificate-name=${it.certificateName},
+  data-status-name=${it.statusName},
+  data-desc=${it.description},
+  data-imagepath=${it.imagePath},
+  data-moderation_note=${it.moderationNote}">
+
+            <td>
+                    <img class="product-image"
+                         th:if="${it.imagePath != null && #strings.length(it.imagePath) > 0}"
+                         th:src="@{${it.imagePath}}" alt="Фото"/>
+                    <span class="product-placeholder"
+                          th:if="${it.imagePath == null or #strings.length(it.imagePath) == 0}"
+                          th:text="${#strings.substring(it.itemName,0,1)}">G</span>
+                    <span th:text="${it.itemName}">Название товара</span>
+                </td>
+                <td th:text="${it.cosmeticTypeName}">Категория</td>
+                <td th:text="|${#numbers.formatDecimal(it.price, 1, 'COMMA', 2, 'POINT')} ₽|">0 ₽</td>
+                <td th:text="${it.quantity}">0</td>
+                <td>
+                    <span class="product-status"
+                          th:classappend="${it.quantity == 0} ? ' status-out-of-stock' : (${it.quantity < 5} ? ' status-low-stock' : ' status-in-stock')"
+                          th:text="${it.quantity == 0 ? 'Нет в наличии' : (it.quantity < 5 ? 'Мало в наличии' : 'В наличии')}">
+                        В наличии
+                    </span>
+                </td>
+                <td th:text="${it.statusName}">Статус товара</td>
+                <td th:text="${it.moderationNote}">Статус заявки</td>
+
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn btn-edit" type="button" onclick="onEditClick(this)">✏️ Редактировать</button>
+                        <form th:action="@{/manager/delete/{id}(id=${it.cosmeticItemId})}"
+                              method="post"
+                              th:attr="onsubmit=|return confirm('Удалить товар #${it.cosmeticItemId}?');|">
+                            <button class="btn btn-delete" type="submit">🗑️ Удалить</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(items)}">
+                <td colspan="8" style="text-align:center; color:#718096; padding:1rem;">Товары не найдены</td>
+            </tr>
+            </tbody>
+        </table>
+        <button class="btn-add" type="button" onclick="openAddProductModal()">➕ Добавить товар</button>
+    </div>
+    <div class="products-section">
+        <h2 class="section-title">Отчёты</h2>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start">
+            <div>
+                <img alt="SKU по категориям" style="width:100%;border-radius:12px"
+                     th:src="@{/manager/reports/chart/by-type.png}"/>
+                <div style="margin-top:.5rem;display:flex;gap:.5rem">
+                    <a id="csvByCategory" class="btn btn-edit" th:href="@{/manager/reports/export/by-category.csv}">⬇️ CSV</a>
+                </div>
+            </div>
+
+            <div>
+                <img alt="Распределение остатков" style="width:100%;border-radius:12px"
+                     th:src="@{/manager/reports/chart/buckets.png}"/>
+                <div style="margin-top:.5rem;display:flex;gap:.5rem">
+                    <a id="csvStockBuckets" class="btn btn-edit" th:href="@{/manager/reports/export/stock-buckets.csv}">⬇️ CSV</a>
+                </div>
+            </div>
+
+            <div style="grid-column:1 / -1">
+                <img alt="Топ-10 брендов по стоимости остатков" style="width:100%;border-radius:12px"
+                     th:src="@{/manager/reports/chart/top-brands.png}"/>
+                <div style="margin-top:.5rem;display:flex;gap:.5rem">
+                    <a id="csvTopBrands" class="btn btn-edit" th:href="@{/manager/reports/export/top-brands.csv}">⬇️ CSV</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div id="addProductModal" class="modal">
+    <div class="modal-content">
+        <div th:if="${msg}" style="margin-bottom:1rem;padding:12px;border-radius:10px;background:#e6fffa;color:#065f46;font-weight:600"
+             th:text="${msg}"></div>
+
+        <div th:if="${error}" style="margin-bottom:1rem;padding:12px;border-radius:10px;background:#ffe6e6;color:#8b0000;font-weight:600"
+             th:text="${error}"></div>
+        <div class="modal-header">
+            <h3 class="modal-title">Добавить товар</h3>
+            <button class="close-btn" type="button" onclick="closeAddProductModal()">×</button>
+        </div>
+        <form th:action="@{/manager/add}" method="post" enctype="multipart/form-data" th:object="${form}">
+            <div class="form-group">
+                <input type="text" id="productName" class="form-input" th:field="*{itemName}" required>
+                <div class="error" th:if="${#fields.hasErrors('itemName')}" th:errors="*{itemName}"></div>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="productCategory">Категория (тип)</label>
+                <select id="productCategory" class="form-select" th:field="*{cosmeticTypeId}" required>
+                    <option value="" selected>Выберите категорию</option>
+                    <option th:each="t : ${types}" th:value="${t.cosmeticTypeId}" th:text="${t.cosmeticTypeName}"></option>
+                </select>
+                <div class="error" th:if="${#fields.hasErrors('cosmeticTypeId')}" th:errors="*{cosmeticTypeId}"></div>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="productBrand">Бренд</label>
+                <select id="productBrand" class="form-select" th:field="*{brandId}" required>
+                    <option value="" selected>Выберите бренд</option>
+                    <option th:each="b : ${brands}" th:value="${b.brandId}" th:text="${b.brandName}"></option>
+                </select>
+                <div class="error" th:if="${#fields.hasErrors('brandId')}" th:errors="*{brandId}"></div>
+
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="manufacturerId">Производитель</label>
+                <select id="manufacturerId" class="form-select" th:field="*{manufacturerId}" required>
+                    <option value="" selected>Выберите производителя</option>
+                    <option th:each="m : ${manufacturers}" th:value="${m.manufacturerId}" th:text="${m.manufacturerName}"></option>
+                </select>
+                <div class="error" th:if="${#fields.hasErrors('manufacturerId')}" th:errors="*{manufacturerId}"></div>
+
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="certificateId">Сертификат качества</label>
+                <select id="certificateId" class="form-select" th:field="*{certificateId}" required>
+                    <option value="" selected>Выберите сертификат</option>
+                    <option th:each="c : ${certificates}" th:value="${c.certificateId}" th:text="${c.certificateName}"></option>
+                </select>
+                <div class="error" th:if="${#fields.hasErrors('certificateId')}" th:errors="*{certificateId}"></div>
+
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="productDescription">Описание</label>
+                <textarea id="productDescription" class="form-textarea" th:field="*{description}"></textarea>
+                <div class="error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></div>
+
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="productPrice">Цена (₽)</label>
+                    <input type="number" id="productPrice" class="form-input" min="0" step="0.01" th:field="*{price}" required>
+                    <div class="error" th:if="${#fields.hasErrors('price')}" th:errors="*{price}"></div>
+
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="productQuantity">Количество</label>
+                    <input type="number" id="productQuantity" class="form-input" min="0" th:field="*{quantity}" required>
+                    <div class="error" th:if="${#fields.hasErrors('quantity')}" th:errors="*{quantity}"></div>
+
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="productImage">Изображение (файл)</label>
+                <input type="file" id="productImage" class="form-input" accept="image/*" th:field="*{imageFile}">
+                <div class="error" th:if="${#fields.hasErrors('imageFile')}" th:errors="*{imageFile}"></div>
+
+
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-cancel" onclick="closeAddProductModal()">Отмена</button>
+                <button type="submit" class="btn btn-save">Сохранить</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Модалка РЕДАКТИРОВАНИЯ товара -->
+<div id="editProductModal" class="modal">
+    <div class="modal-content">
+        <div th:if="${msg}" style="margin-bottom:1rem;padding:12px;border-radius:10px;background:#e6fffa;color:#065f46;font-weight:600"
+             th:text="${msg}"></div>
+
+        <div th:if="${error}" style="margin-bottom:1rem;padding:12px;border-radius:10px;background:#ffe6e6;color:#8b0000;font-weight:600"
+             th:text="${error}"></div>
+        <div class="modal-header">
+            <h3 class="modal-title">Редактировать товар</h3>
+            <button class="close-btn" type="button" onclick="closeEditProductModal()">×</button>
+        </div>
+
+        <form id="editForm"
+              action="/manager/edit" method="post" enctype="multipart/form-data" th:object="${form}">
+
+            <input type="hidden" name="id" id="editId" th:value="${editId}"/>
+
+            <input type="hidden" th:field="*{imagePath}">
+
+            <div class="form-group">
+                <label class="form-label">Название товара</label>
+                <input type="text" class="form-input" th:field="*{itemName}" required>
+                <div class="error" th:if="${#fields.hasErrors('itemName')}" th:errors="*{itemName}"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Категория (тип)</label>
+                <select class="form-select" th:field="*{cosmeticTypeId}" required>
+                    <option value="" selected>Выберите категорию</option>
+                    <option th:each="t : ${types}" th:value="${t.cosmeticTypeId}" th:text="${t.cosmeticTypeName}"></option>
+                </select>
+                <div class="error" th:if="${#fields.hasErrors('cosmeticTypeId')}" th:errors="*{cosmeticTypeId}"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Бренд</label>
+                <select class="form-select" th:field="*{brandId}" required>
+                    <option value="" selected>Выберите бренд</option>
+                    <option th:each="b : ${brands}" th:value="${b.brandId}" th:text="${b.brandName}"></option>
+                </select>
+                <div class="error" th:if="${#fields.hasErrors('brandId')}" th:errors="*{brandId}"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Производитель</label>
+                <select class="form-select" th:field="*{manufacturerId}" required>
+                    <option value="" selected>Выберите производителя</option>
+                    <option th:each="m : ${manufacturers}" th:value="${m.manufacturerId}" th:text="${m.manufacturerName}"></option>
+                </select>
+                <div class="error" th:if="${#fields.hasErrors('manufacturerId')}" th:errors="*{manufacturerId}"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Сертификат качества</label>
+                <select class="form-select" th:field="*{certificateId}" required>
+                    <option value="" selected>Выберите сертификат</option>
+                    <option th:each="c : ${certificates}" th:value="${c.certificateId}" th:text="${c.certificateName}"></option>
+                </select>
+                <div class="error" th:if="${#fields.hasErrors('certificateId')}" th:errors="*{certificateId}"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Описание</label>
+                <textarea class="form-textarea" th:field="*{description}" maxlength="100" placeholder="до 100 символов"></textarea>
+                <div class="error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Цена (₽)</label>
+                    <input type="number" class="form-input" min="0" step="0.01" th:field="*{price}" required>
+                    <div class="error" th:if="${#fields.hasErrors('price')}" th:errors="*{price}"></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Количество</label>
+                    <input type="number" class="form-input" min="0" th:field="*{quantity}" required>
+                    <div class="error" th:if="${#fields.hasErrors('quantity')}" th:errors="*{quantity}"></div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Изображение (файл)</label>
+                <input type="file" class="form-input" accept="image/*" th:field="*{imageFile}">
+                <div class="error" th:if="${#fields.hasErrors('imageFile')}" th:errors="*{imageFile}"></div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-cancel" onclick="closeEditProductModal()">Отмена</button>
+                <button type="submit" class="btn btn-save">Сохранить изменения</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<script>
+    function filterProducts(q) {
+      q = (q || '').toLowerCase();
+      const rows = document.querySelectorAll('#productsTbody .product-row');
+      rows.forEach(tr => {
+        const text = tr.innerText.toLowerCase();
+        tr.style.display = text.includes(q) ? '' : 'none';
+      });
+    }
+
+    function openAddProductModal(){ document.getElementById('addProductModal').style.display = 'flex'; }
+    function closeAddProductModal(){ document.getElementById('addProductModal').style.display = 'none'; }
+    function openEditProductModal(){ document.getElementById('editProductModal').style.display = 'flex'; }
+    function closeEditProductModal(){ document.getElementById('editProductModal').style.display = 'none'; }
+
+    window.onclick = function(e) {
+      const addModal = document.getElementById('addProductModal');
+      const editModal = document.getElementById('editProductModal');
+      if (e.target === addModal) closeAddProductModal();
+      if (e.target === editModal) closeEditProductModal();
+    }
+
+    // Выбор option по видимому тексту (так как из вью есть только name)
+    function selectByText(selectEl, text) {
+      if (!selectEl) return;
+      const wanted = (text || '').trim().toLowerCase();
+      for (const opt of selectEl.options) {
+        if ((opt.text || '').trim().toLowerCase() === wanted) {
+          selectEl.value = opt.value;
+          return;
+        }
+      }
+    }
+
+   function onEditClick(btn){
+    const tr = btn.closest('tr');
+    if(!tr) return;
+
+    const id = tr.dataset.id;
+    const f = document.getElementById('editForm');
+    if(!f) return;
+
+    // Очищаем предыдущие ошибки
+    clearValidationErrors(f);
+
+    // Устанавливаем ID
+    f.querySelector('#editId').value = id;
+
+    // Заполняем поля данными
+    f.querySelector('[name="itemName"]').value = tr.dataset.name || '';
+    f.querySelector('[name="price"]').value = tr.dataset.price || '';
+    f.querySelector('[name="quantity"]').value = tr.dataset.qty || '';
+
+    const descEl = f.querySelector('[name="description"]');
+    if (descEl) descEl.value = tr.dataset.desc || '';
+
+    const imgPathEl = f.querySelector('[name="imagePath"]');
+    if (imgPathEl) imgPathEl.value = tr.dataset.imagepath || '';
+
+    // Выбираем значения в селектах
+    selectByText(f.querySelector('[name="cosmeticTypeId"]'), tr.dataset.typeName);
+    selectByText(f.querySelector('[name="brandId"]'), tr.dataset.brandName);
+    selectByText(f.querySelector('[name="manufacturerId"]'), tr.dataset.manufacturerName);
+    selectByText(f.querySelector('[name="certificateId"]'), tr.dataset.certificateName);
+    selectByText(f.querySelector('[name="productStatusId"]'), tr.dataset.statusName);
+
+
+    openEditProductModal();
+}
+
+// Функция для очистки ошибок валидации
+function clearValidationErrors(form) {
+    const errors = form.querySelectorAll('.error');
+    errors.forEach(error => error.remove());
+
+    const errorFields = form.querySelectorAll('.error-field');
+    errorFields.forEach(field => {
+        field.classList.remove('error-field');
+    });
+}
+
+// Функция для показа ошибок валидации
+function showValidationErrors(form, errors) {
+    clearValidationErrors(form);
+
+    Object.keys(errors).forEach(field => {
+        const input = form.querySelector(`[name="${field}"]`);
+        if (input) {
+            input.classList.add('error-field');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = errors[field];
+            input.parentNode.appendChild(errorDiv);
+        }
+    });
+
+}
+</script>
+<script>
+    (function () {
+      // Подсказка
+      const help = document.createElement('div');
+      help.style.cssText =
+        'position:fixed;right:16px;bottom:16px;background:#111827;color:#fff;padding:10px 12px;border-radius:10px;box-shadow:0 10px 20px rgba(0,0,0,.15);font:13px/1.3 system-ui;opacity:.9;z-index:9999';
+      help.innerHTML =
+        '<strong>Горячие клавиши</strong><div style="margin-top:6px">' +
+          'g,1 — Добавить<br>' +
+          'g,2 — CSV by-category<br>' +
+          'g,3 — CSV stock-buckets<br>' +
+          'g,4 — CSV top-brands<br>' +
+          'g,5 — Фокус поиска<br>' +
+          'g,6 — Экспорт всех CSV<br>' +
+          '<div style="margin-top:6px">Справка: Shift+? — показать/скрыть</div></div>';
+      document.body.appendChild(help);
+
+      let seq = 0;      // 0 — ждём g, 1 — ждём цифру
+      let timer = null;
+
+      // Клик по кнопке
+      function clickButtonById(id){
+        const el = document.getElementById(id);
+        if (el) el.click();
+      }
+
+      // Скачать по ссылке: вариант через смену location
+      function downloadById(id){
+        const a = document.getElementById(id);
+        if (a && a.href) window.location.assign(a.href);
+      }
+
+
+      // Фокус
+      function focusById(id){
+        const el = document.getElementById(id);
+        if (el) el.focus();
+      }
+
+     function handleAction(n){
+  switch(n){
+    case '1': clickButtonById('btnAdd'); break;
+    case '2': downloadById('csvByCategory'); break;
+    case '3': downloadById('csvStockBuckets'); break;
+    case '4': downloadById('csvTopBrands'); break;
+    case '5': focusById('searchInput'); break;
+    case '6': downloadById('allcvs'); break;
+  }
+}
+
+      document.addEventListener('keydown', (e) => {
+        // Показ/скрытие подсказки — Shift+?
+        if (e.shiftKey && (e.key === '?' || e.key === '/')) {
+          e.preventDefault();
+          help.style.display = (help.style.display === 'none') ? '' : 'none';
+          return;
+        }
+
+        const tag = (e.target.tagName || '').toLowerCase();
+        const typing = ['input','textarea','select'].includes(tag) || e.target.isContentEditable;
+        if (typing) return;
+
+        if (seq === 0) {
+          if (e.key.toLowerCase() === 'g' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+            e.preventDefault();
+            seq = 1;
+            clearTimeout(timer);
+            timer = setTimeout(() => seq = 0, 1500);
+          }
+        } else { // seq === 1
+          const k = e.key;
+            if (['1','2','3','4','5','6'].includes(k)) {
+            e.preventDefault();
+            clearTimeout(timer);
+            seq = 0;
+            handleAction(k);
+            return;
+          }
+          seq = 0;
+        }
+
+        if (e.altKey && e.shiftKey && !e.ctrlKey && !e.metaKey) {
+          if (e.key.toLowerCase() === 'a') { e.preventDefault(); clickButtonById('btnAdd'); return; }
+          if (e.key === '1') { e.preventDefault(); downloadById('csvByCategory'); return; }
+          if (e.key === '2') { e.preventDefault(); downloadById('csvStockBuckets'); return; }
+          if (e.key === '3') { e.preventDefault(); downloadById('csvTopBrands'); return; }
+          if (e.key.toLowerCase() === 's') { e.preventDefault(); focusById('searchInput'); return; }
+        }
+      }, {passive:false});
+
+      console.log('[hotkeys] ready');
+    })();
+</script>
+
+
+<script th:inline="javascript">
+    /*[[${openEditModal}]]*/false && openEditProductModal();
+</script>
+<script th:if="${openAddModal}" defer>
+    window.addEventListener('DOMContentLoaded', () => { openAddProductModal(); });
+</script>
+
+<script th:if="${openEditModal}" defer>
+    window.addEventListener('DOMContentLoaded', () => { closeAddProductModal?.(); openEditProductModal(); });
+</script>
 </body>
 </html>

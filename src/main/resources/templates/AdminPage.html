@@ -527,16 +527,23 @@
 
     <div class="admin-controls">
         <div class="controls-grid">
-            <button class="control-btn" type="button" onclick="openAddUserModal()">
+            <button id="btnAddUser" class="control-btn" type="button" onclick="openAddUserModal()">
                 <span class="control-icon">➕</span>
                 Добавить пользователя
             </button>
-            <a href="/reports" class="control-btn">
-                <span class="control-icon">📊</span>
-                Отчеты и аналитика
+            <a  id="btnExportCsv" href="/admin/reports/orders.csv" class="control-btn">
+                <span class="control-icon">⬇️</span>
+                Экспорт (CSV, помесячно)
             </a>
         </div>
     </div>
+
+    <!-- Один график: Доход по месяцам -->
+    <div class="users-section">
+        <h2 class="section-title">Доход по месяцам</h2>
+        <canvas id="revenueChart" height="120"></canvas>
+    </div>
+
 
     <!-- Список пользователей -->
     <div class="users-section">
@@ -568,19 +575,17 @@
                     <div class="action-buttons">
                         <button class="btn btn-edit"
                                 th:attr="data-id=${user.userId},
-                             data-username=${user.login},
-                             data-role=${user.role.roleName}"
+                     data-username=${user.login},
+                     data-role=${user.role.roleName}"
                                 type="button"
                                 onclick="onEditClick(this)">
                             ✏️ Изменить
                         </button>
-
-                        <button class="btn btn-delete"
-                                th:attr="data-id=${user.userId}"
-                                type="button"
-                                onclick="confirmDeleteUser(this.dataset.id)">
-                            🗑️ Удалить
-                        </button>
+                        <form th:action="@{/admin/users/delete/{id}(id=${user.userId})}" method="post"
+                              onsubmit="return confirm('Удалить пользователя &laquo;' + this.dataset.username + '&raquo;?')"
+                              th:attr="data-username=${user.login}">
+                            <button class="btn btn-delete" type="submit">🗑️ Удалить</button>
+                        </form>
                     </div>
                 </td>
             </tr>
@@ -676,13 +681,11 @@
       });
     }
 
-    // ---- Модалки ----
     function openAddUserModal(){ document.getElementById('addUserModal').style.display = 'flex'; }
     function closeAddUserModal(){ document.getElementById('addUserModal').style.display = 'none'; }
     function openEditUserModal(){ document.getElementById('editUserModal').style.display = 'flex'; }
     function closeEditUserModal(){ document.getElementById('editUserModal').style.display = 'none'; }
 
-    // ---- Открыть модалку редактирования и заполнить поля ----
     function onEditClick(btn){
       document.getElementById('editUserId').value   = btn.dataset.id;
       document.getElementById('editUsername').value = btn.dataset.username;
@@ -690,21 +693,8 @@
       openEditUserModal();
     }
 
-    // ---- Удаление пользователя (CSRF выключен) ----
-    function confirmDeleteUser(userId){
-      if (!userId){ alert('Не передан ID пользователя'); return; }
-      if (!confirm('Вы уверены, что хотите удалить этого пользователя?')) return;
 
-      fetch('/admin/users/delete/' + userId, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      }).then(resp=>{
-        if (resp.ok) location.reload();
-        else alert('Ошибка при удалении пользователя (HTTP ' + resp.status + ')');
-      }).catch(()=>alert('Ошибка при удалении пользователя'));
-    }
 
-    // ---- Фокус на первом поле с ошибкой в модалке ----
     function focusFirstError(modalId){
       const modal = document.getElementById(modalId);
       if (!modal) return;
@@ -728,7 +718,6 @@
     }
 </script>
 
-<!-- ВАЖНО: этот блок ДОЛЖЕН быть th:inline, иначе значения не подставятся -->
 <script th:inline="javascript">
     /*<![CDATA[*/
       document.addEventListener('DOMContentLoaded', function(){
@@ -737,7 +726,6 @@
 
         if (openAdd) {
           document.getElementById('addUserModal').style.display = 'flex';
-          // Дадим DOM дорендериться и сфокусируемся
           setTimeout(() => focusFirstError('addUserModal'), 0);
         }
         if (openEdit) {
@@ -747,5 +735,115 @@
       });
     /*]]>*/
 </script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+      const labels  = /*[[${chartLabels}]]*/ [];
+      const revenue = /*[[${chartRevenue}]]*/ [];
+      const counts  = /*[[${chartCounts}]]*/ [];
+
+      const ctx = document.getElementById('revenueChart').getContext('2d');
+      const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Доход, ₽',
+            data: revenue,
+            borderWidth: 2,
+            tension: 0.25
+          }, {
+            label: 'Кол-во заказов',
+            data: counts,
+            borderWidth: 2,
+            tension: 0.25,
+            yAxisID: 'y2'
+          }]
+        },
+        options: {
+          responsive: true,
+          interaction: { mode: 'index', intersect: false },
+          scales: {
+            y:  { title: { display: true, text: 'Доход' } },
+            y2: { position: 'right', title: { display: true, text: 'Заказы' }, grid: { drawOnChartArea:false } }
+          }
+        }
+      });
+    /*]]>*/
+</script>
+<script>
+    (function(){
+      // маленькая подсказка
+      const help = document.createElement('div');
+      help.style.cssText = 'position:fixed;right:16px;bottom:16px;background:#111827;color:#fff;padding:10px 12px;border-radius:10px;box-shadow:0 10px 20px rgba(0,0,0,.15);font:13px/1.3 system-ui;opacity:.9;z-index:9999';
+      help.innerHTML =
+        '<strong>Горячие клавиши</strong><div style="margin-top:6px">' +
+        'g,1 — Добавить пользователя<br>' +
+        'g,2 — Экспорт CSV<br>' +
+        '<div style="margin-top:6px">Справка: Shift+? — показать/скрыть</div></div>';
+      document.body.appendChild(help);
+
+      let seq = 0;          // 0 — ждём g, 1 — ждём цифру
+      let timer = null;
+
+      function clickById(id){
+        const el = document.getElementById(id);
+        if (!el) return;
+        // если это <a> — переходим по ссылке, иначе click()
+        if (el.tagName === 'A' && el.href) { window.location.assign(el.href); }
+        else { el.click(); }
+      }
+
+      function handleAction(n){
+        switch(n){
+          case '1': clickById('btnAddUser'); break;   // открыть модалку добавления
+          case '2': clickById('btnExportCsv'); break; // скачать CSV
+        }
+      }
+
+      document.addEventListener('keydown', (e) => {
+        // показать/скрыть подсказку — Shift+?
+        if (e.shiftKey && (e.key === '?' || e.key === '/')) {
+          e.preventDefault();
+          help.style.display = (help.style.display === 'none') ? '' : 'none';
+          return;
+        }
+
+        // не перехватываем, когда печатают в инпутах/текстовых областях/селектах
+        const tag = (e.target.tagName || '').toLowerCase();
+        const typing = ['input','textarea','select'].includes(tag) || e.target.isContentEditable;
+        if (typing) return;
+
+        // двухударные g,1..2
+        if (seq === 0) {
+          if (e.key.toLowerCase() === 'g' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+            e.preventDefault();
+            seq = 1;
+            clearTimeout(timer);
+            timer = setTimeout(()=> seq = 0, 1500);
+          }
+        } else { // ждём цифру
+          const k = e.key;
+          if (['1','2'].includes(k)) {
+            e.preventDefault();
+            clearTimeout(timer);
+            seq = 0;
+            handleAction(k);
+            return;
+          }
+          seq = 0;
+        }
+
+        // одноударные дубликаты: Alt+Shift+U (user), Alt+Shift+E (export)
+        if (e.altKey && e.shiftKey && !e.ctrlKey && !e.metaKey) {
+          if (e.key.toLowerCase() === 'u') { e.preventDefault(); clickById('btnAddUser'); return; }
+          if (e.key.toLowerCase() === 'e') { e.preventDefault(); clickById('btnExportCsv'); return; }
+        }
+      }, {passive:false});
+
+      console.log('[admin hotkeys] ready');
+    })();
+</script>
+
 </body>
 </html>

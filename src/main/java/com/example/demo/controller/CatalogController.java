@@ -7,6 +7,7 @@ import com.example.demo.service.CartService;
 import com.example.demo.service.CommentsService;
 import com.example.demo.service.FavourService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -33,21 +34,36 @@ public class CatalogController {
 
     @GetMapping("/Catalog")
     public String testPage(Model model, Authentication authentication) {
-        String username = authentication.getName();
+        if (authentication != null
+                && authentication.isAuthenticated()
+                && !(authentication instanceof AnonymousAuthenticationToken)) {
+            String username = authentication.getName();
 
-        model.addAttribute("items", cosmeticViewRepository.findAll());
-        model.addAttribute("brands", brandsRepository.findAll());
-        model.addAttribute("types", cosmeticTypesRepository.findAll());
-        Set<Integer> favIds = favourService.getFavouriteIds(username);
-        model.addAttribute("favouriteIds", favIds);
+            model.addAttribute("items", cosmeticViewRepository.findAll());
+            model.addAttribute("brands", brandsRepository.findAll());
+            model.addAttribute("types", cosmeticTypesRepository.findAll());
+            Set<Integer> favIds = favourService.getFavouriteIds(username);
+            model.addAttribute("favouriteIds", favIds);
 
-        User user = usersRepository.findByLogin(username).orElse(null);
-        String role = (user != null) ? user.getRole().getRoleName().trim() : "неизвестно";
-        model.addAttribute("username", username);
-        model.addAttribute("role", role);
+            User user = usersRepository.findByLogin(username).orElse(null);
+            String role = (user != null) ? user.getRole().getRoleName().trim() : "неизвестно";
+            model.addAttribute("username", username);
+            model.addAttribute("role", role);
 
-        Map<Integer, List<Comments>> commentsByItem = commentsService.findAllGroupedByCosmeticItemId();
-        model.addAttribute("commentsByItem", commentsByItem);
+            Map<Integer, List<Comments>> commentsByItem = commentsService.findAllGroupedByCosmeticItemId();
+            model.addAttribute("commentsByItem", commentsByItem);
+        }
+        else{
+            model.addAttribute("username", "Гость");
+            model.addAttribute("roles", "гость");
+            model.addAttribute("items", cosmeticViewRepository.findAll());
+            model.addAttribute("brands", brandsRepository.findAll());
+            model.addAttribute("types", cosmeticTypesRepository.findAll());
+            Map<Integer, List<Comments>> commentsByItem = commentsService.findAllGroupedByCosmeticItemId();
+            model.addAttribute("commentsByItem", commentsByItem);
+
+        }
+
 
         return "Catalog";
     }

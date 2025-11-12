@@ -1,404 +1,215 @@
 <!DOCTYPE html>
 <html lang="ru" xmlns:th="http://www.thymeleaf.org">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Glamour - Премиальная косметика</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Glamour — Премиальная косметика</title>
+
+    <!-- Общие стили проекта -->
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+
+    <!-- Локальные стили Главной (без конфликтов с header-фрагментом) -->
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; }
+        body{
+          font-family: Arial, sans-serif;
+          color:#333; line-height:1.6;
+          background:linear-gradient(135deg,#f5f7fa 0%,#c3cfe2 100%);
+          padding-top:80px; /* отступ под фикс-хедер из фрагмента */
         }
 
-        body {
-            font-family: 'Arial', sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        .home-container{ max-width:1200px; margin:0 auto; padding:0 24px; }
+
+        /* HERO */
+        .home-hero{
+          min-height:calc(100vh - 80px);
+          display:flex; justify-content:center; align-items:center; text-align:center; color:#fff;
+          background:
+            linear-gradient(rgba(0,0,0,.4), rgba(0,0,0,.4)),
+            url('https://images.unsplash.com/photo-1596462502278-27bfdc403348?ixlib=rb-4.0.3') center/cover no-repeat;
+          padding:40px 24px;
         }
-
-        /* Header */
-        .header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 1rem 0;
-            position: fixed;
-            width: 100%;
-            top: 0;
-            z-index: 1000;
-            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        .home-hero__content h1{ font-size:56px; line-height:1.15; margin-bottom:16px; text-shadow:2px 2px 4px rgba(0,0,0,.45); }
+        .home-hero__content p{ font-size:20px; margin-bottom:28px; text-shadow:1px 1px 2px rgba(0,0,0,.45); }
+        .home-btn{
+          display:inline-block; padding:14px 26px; border-radius:999px; text-decoration:none;
+          background:#e91e63; color:#fff; font-weight:700; transition:.25s; box-shadow:0 10px 24px rgba(233,30,99,.35);
         }
+        .home-btn:hover{ transform:translateY(-3px); background:#c2185b; box-shadow:0 14px 28px rgba(233,30,99,.45); }
 
-        .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 2rem;
+        /* Секции */
+        .home-section{ padding:80px 0; background:#fff; }
+        .home-section.alt{ background:#f8f9fa; }
+        .home-section__title{ text-align:center; font-size:40px; font-weight:700; color:#333; margin-bottom:36px; }
+
+        /* Категории */
+        .home-categories{ display:grid; grid-template-columns:repeat(4,1fr); gap:24px; }
+        .home-category{ background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,.08); transition:.25s; cursor:pointer; }
+        .home-category:hover{ transform:translateY(-8px); box-shadow:0 16px 36px rgba(0,0,0,.12); }
+        .home-category__image{ height:200px; background:#eee center/cover no-repeat; }
+        .home-category__content{ padding:18px 16px; text-align:center; }
+        .home-category__title{ font-size:20px; font-weight:700; color:#333; margin-bottom:6px; }
+        .home-category__text{ color:#666; font-size:14px; }
+
+        /* Фичи */
+        .home-features{ display:grid; grid-template-columns:repeat(3,1fr); gap:28px; }
+        .home-feature{ text-align:center; padding:28px 18px; background:#fff; border-radius:14px; box-shadow:0 8px 28px rgba(0,0,0,.08); }
+        .home-feature__icon{ font-size:40px; color:#e91e63; margin-bottom:10px; }
+        .home-feature__title{ font-size:20px; font-weight:700; margin-bottom:8px; }
+
+        /* Бренды */
+        .home-brands{ display:grid; grid-template-columns:repeat(6,1fr); gap:20px; align-items:center; }
+        .home-brand{ height:80px; border-radius:12px; background:#f8f9fa; display:flex; justify-content:center; align-items:center; color:#666; font-weight:700; }
+
+        /* Footer (контентный) */
+        .home-footer{ background:#333; color:#fff; padding:48px 0 24px; }
+        .home-footer__grid{ display:grid; gap:24px; grid-template-columns:repeat(3,1fr); }
+        .home-footer__title{ color:#e91e63; font-weight:800; margin-bottom:10px; }
+        .home-footer__bottom{ text-align:center; margin-top:28px; padding-top:18px; border-top:1px solid #555; font-size:14px; }
+
+        /* Адаптив */
+        @media (max-width:1200px){
+          .home-container{ padding:0 20px; }
+          .home-categories{ grid-template-columns:repeat(3,1fr); }
+          .home-brands{ grid-template-columns:repeat(5,1fr); }
         }
-
-        .logo {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #e91e63;
-            text-decoration: none;
+        @media (max-width:992px){
+          .home-hero__content h1{ font-size:42px; }
+          .home-hero__content p{ font-size:18px; }
+          .home-categories{ grid-template-columns:repeat(2,1fr); }
+          .home-features{ grid-template-columns:1fr 1fr; }
+          .home-brands{ grid-template-columns:repeat(4,1fr); }
+          .home-footer__grid{ grid-template-columns:1fr 1fr; }
         }
-
-        .nav-links {
-            display: flex;
-            list-style: none;
-            gap: 2rem;
+        @media (max-width:768px){
+          .home-hero{ padding:32px 16px; }
+          .home-hero__content h1{ font-size:34px; }
+          .home-hero__content p{ font-size:16px; }
+          .home-section{ padding:56px 0; }
+          .home-section__title{ font-size:28px; }
+          .home-features{ grid-template-columns:1fr; }
+          .home-brands{ grid-template-columns:repeat(3,1fr); }
+          .home-footer__grid{ grid-template-columns:1fr; }
         }
-
-        .nav-links a {
-            text-decoration: none;
-            color: #333;
-            font-weight: 500;
-            transition: color 0.3s;
-        }
-
-        .nav-links a:hover {
-            color: #e91e63;
-        }
-
-        /* Hero Section */
-        .hero {
-            height: 100vh;
-            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)),
-                        url('https://images.unsplash.com/photo-1596462502278-27bfdc403348?ixlib=rb-4.0.3') center/cover;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            color: white;
-            padding: 0 2rem;
-        }
-
-        .hero-content h1 {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-
-        .hero-content p {
-            font-size: 1.5rem;
-            margin-bottom: 2rem;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-        }
-
-        .cta-button {
-            display: inline-block;
-            padding: 1rem 2rem;
-            background: #e91e63;
-            color: white;
-            text-decoration: none;
-            border-radius: 50px;
-            font-weight: bold;
-            transition: transform 0.3s, background 0.3s;
-        }
-
-        .cta-button:hover {
-            transform: translateY(-3px);
-            background: #c2185b;
-        }
-
-        /* Categories */
-        .categories {
-            padding: 5rem 2rem;
-            background: white;
-        }
-
-        .section-title {
-            text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 3rem;
-            color: #333;
-        }
-
-        .category-grid {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
-        }
-
-        .category-card {
-            background: white;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            transition: transform 0.3s;
-            cursor: pointer;
-        }
-
-        .category-card:hover {
-            transform: translateY(-10px);
-        }
-
-        .category-image {
-            height: 200px;
-            background-size: cover;
-            background-position: center;
-        }
-
-        .category-content {
-            padding: 1.5rem;
-            text-align: center;
-        }
-
-        .category-content h3 {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-            color: #333;
-        }
-
-        /* Features */
-        .features {
-            padding: 5rem 2rem;
-            background: #f8f9fa;
-        }
-
-        .feature-grid {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 3rem;
-        }
-
-        .feature-card {
-            text-align: center;
-            padding: 2rem;
-        }
-
-        .feature-icon {
-            font-size: 3rem;
-            color: #e91e63;
-            margin-bottom: 1rem;
-        }
-
-        .feature-card h3 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            color: #333;
-        }
-
-        /* Brands */
-        .brands {
-            padding: 4rem 2rem;
-            background: white;
-        }
-
-        .brand-grid {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 2rem;
-            align-items: center;
-        }
-
-        .brand-logo {
-            height: 80px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: #666;
-            font-size: 1.2rem;
-        }
-
-        /* Footer */
-        .footer {
-            background: #333;
-            color: white;
-            padding: 3rem 2rem;
-        }
-
-        .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
-        }
-
-        .footer-section h3 {
-            margin-bottom: 1rem;
-            color: #e91e63;
-        }
-
-        .footer-bottom {
-            text-align: center;
-            margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 1px solid #555;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .nav-links {
-                display: none;
-            }
-
-            .hero-content h1 {
-                font-size: 2.5rem;
-            }
-
-            .hero-content p {
-                font-size: 1.2rem;
-            }
+        @media (max-width:480px){
+          .home-hero__content h1{ font-size:28px; }
+          .home-hero__content p{ font-size:15px; }
+          .home-categories{ grid-template-columns:1fr; }
+          .home-brands{ grid-template-columns:repeat(2,1fr); }
         }
     </style>
 </head>
 <body>
-<header class="header">
-    <div th:replace="~{fragments :: headerFragment(${roles}, ${username})}"></div>
-</header>
 
-<section class="hero">
-    <div class="hero-content">
+<div th:replace="~{fragments :: headerFragment(${roles}, ${username})}"></div>
+
+<section class="home-hero">
+    <div class="home-hero__content">
         <h1>Ваша красота начинается здесь</h1>
         <p>Откройте мир премиальной косметики с Glamour</p>
-        <a href="#" class="cta-button">Начать покупки</a>
+        <a th:href="@{/Catalog}" class="home-btn">Начать покупки</a>
     </div>
 </section>
 
-<section class="categories">
-    <h2 class="section-title">Категории</h2>
-    <div class="category-grid">
-        <div class="category-card">
-            <div class="category-image" style="background-image: url('https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?ixlib=rb-4.0.3')"></div>
-            <div class="category-content">
-                <h3>Уход за кожей</h3>
-                <p>Кремы, сыворотки, тоники</p>
-            </div>
-        </div>
-        <div class="category-card">
-            <div class="category-image" style="background-image: url('https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?ixlib=rb-4.0.3')"></div>
-            <div class="category-content">
-                <h3>Декоративная косметика</h3>
-                <p>Помады, тени, тональные средства</p>
-            </div>
-        </div>
-        <div class="category-card">
-            <div class="category-image" style="background-image: url('https://images.unsplash.com/photo-1556228578-8c89e6adf883?ixlib=rb-4.0.3')"></div>
-            <div class="category-content">
-                <h3>Парфюмерия</h3>
-                <p>Ароматы на любой вкус</p>
-            </div>
-        </div>
-        <div class="category-card">
-            <div class="category-image" style="background-image: url('https://images.unsplash.com/photo-1571781926291-c477ebfd024b?ixlib=rb-4.0.3')"></div>
-            <div class="category-content">
-                <h3>Волосы</h3>
-                <p>Шампуни, маски, стайлинг</p>
-            </div>
-        </div>
-    </div>
-</section>
+<section class="home-section">
+    <div class="home-container">
+        <h2 class="home-section__title">Категории</h2>
 
-<section class="features">
-    <h2 class="section-title">Почему выбирают нас</h2>
-    <div class="feature-grid">
+        <div class="home-categories">
+            <article class="home-category">
+                <div class="home-category__image" style="background-image:url('https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?ixlib=rb-4.0.3')"></div>
+                <div class="home-category__content">
+                    <h3 class="home-category__title">Уход за кожей</h3>
+                    <p class="home-category__text">Кремы, сыворотки, тоники</p>
+                </div>
+            </article>
 
-        <div class="feature-card">
-            <div class="feature-icon">✅</div>
-            <h3>Гарантия качества</h3>
-            <p>Все товары сертифицированы и 100% оригинальны</p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon">💎</div>
-            <h3>Премиум бренды</h3>
-            <p>Только лучшие мировые бренды косметики</p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon">👩‍💼</div>
-            <h3>Консультация</h3>
-            <p>Профессиональные консультации от бьюти-экспертов</p>
+            <article class="home-category">
+                <div class="home-category__image" style="background-image:url('https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?ixlib=rb-4.0.3')"></div>
+                <div class="home-category__content">
+                    <h3 class="home-category__title">Декоративная косметика</h3>
+                    <p class="home-category__text">Помады, тени, тональные средства</p>
+                </div>
+            </article>
+
+            <article class="home-category">
+                <div class="home-category__image" style="background-image:url('https://images.unsplash.com/photo-1556228578-8c89e6adf883?ixlib=rb-4.0.3')"></div>
+                <div class="home-category__content">
+                    <h3 class="home-category__title">Парфюмерия</h3>
+                    <p class="home-category__text">Ароматы на любой вкус</p>
+                </div>
+            </article>
+
+            <article class="home-category">
+                <div class="home-category__image" style="background-image:url('https://images.unsplash.com/photo-1571781926291-c477ebfd024b?ixlib=rb-4.0.3')"></div>
+                <div class="home-category__content">
+                    <h3 class="home-category__title">Волосы</h3>
+                    <p class="home-category__text">Шампуни, маски, стайлинг</p>
+                </div>
+            </article>
         </div>
     </div>
 </section>
 
-<section class="brands">
-    <h2 class="section-title">Наши бренды</h2>
-    <div class="brand-grid">
-        <div th:each="brand : ${brands}" class="brand-logo">
-            <span th:text="${brand.brandName}">Brand Name</span>
+<!-- Почему выбирают нас -->
+<section class="home-section alt">
+    <div class="home-container">
+        <h2 class="home-section__title">Почему выбирают нас</h2>
+
+        <div class="home-features">
+            <div class="home-feature">
+                <div class="home-feature__icon">✅</div>
+                <h3 class="home-feature__title">Гарантия качества</h3>
+                <p>Все товары сертифицированы и 100% оригинальны</p>
+            </div>
+            <div class="home-feature">
+                <div class="home-feature__icon">💎</div>
+                <h3 class="home-feature__title">Премиум бренды</h3>
+                <p>Только лучшие мировые бренды косметики</p>
+            </div>
+            <div class="home-feature">
+                <div class="home-feature__icon">👩‍💼</div>
+                <h3 class="home-feature__title">Консультация</h3>
+                <p>Профессиональные консультации от бьюти-экспертов</p>
+            </div>
         </div>
     </div>
 </section>
 
-<footer class="footer">
-    <div class="footer-content">
-        <div class="footer-section">
-            <h3>Glamour</h3>
-            <p>Ваш надежный партнер в мире премиальной косметики. Мы делаем красоту доступной для каждой женщины.</p>
-        </div>
-        <div class="footer-section">
-            <h3>Контакты</h3>
-            <p>📞 +7 (999) 123-45-67</p>
-            <p>✉️ info@glamour.ru</p>
-            <p>📍 Москва, ул. Красивая, 123</p>
-        </div>
-        <div class="footer-section">
-            <h3>Полезные ссылки</h3>
-            <p><a href="#" style="color: white;">Доставка и оплата</a></p>
-            <p><a href="#" style="color: white;">Возврат товара</a></p>
-            <p><a href="#" style="color: white;">Политика конфиденциальности</a></p>
+<!-- Бренды -->
+<section class="home-section">
+    <div class="home-container">
+        <h2 class="home-section__title">Наши бренды</h2>
+
+        <div class="home-brands">
+            <div class="home-brand" th:each="b : ${brands}" th:text="${b.brandName}">Brand</div>
         </div>
     </div>
-    <div class="footer-bottom">
-        <p>&copy; 2024 Glamour. Все права защищены.</p>
+</section>
+
+<!-- Footer (контентный) -->
+<footer class="home-footer">
+    <div class="home-container">
+        <div class="home-footer__grid">
+            <div>
+                <h3 class="home-footer__title">Glamour</h3>
+                <p>Ваш надёжный партнёр в мире премиальной косметики.</p>
+            </div>
+            <div>
+                <h3 class="home-footer__title">Контакты</h3>
+                <p>📞 +7 (999) 123-45-67</p>
+                <p>✉️ info@glamour.ru</p>
+            </div>
+            <div>
+                <h3 class="home-footer__title">Адрес</h3>
+                <p>📍 Москва, ул. Красивая, 123</p>
+            </div>
+        </div>
+        <div class="home-footer__bottom">© 2024 Glamour. Все права защищены.</div>
     </div>
 </footer>
 
-<script>
-    // Плавная прокрутка для навигации
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            document.querySelector(this.getAttribute('href')).scrollIntoView({
-                behavior: 'smooth'
-            });
-        });
-    });
-
-    // Параллакс эффект для hero секции
-    window.addEventListener('scroll', function() {
-        const scrolled = window.pageYOffset;
-        const hero = document.querySelector('.hero');
-        hero.style.transform = `translateY(${scrolled * 0.5}px)`;
-    });
-
-    // Анимация появления элементов при скролле
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.style.opacity = '1';
-                entry.target.style.transform = 'translateY(0)';
-            }
-        });
-    }, observerOptions);
-
-    // Наблюдаем за карточками категорий и фич
-    document.querySelectorAll('.category-card, .feature-card').forEach(card => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(20px)';
-        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-        observer.observe(card);
-    });
-</script>
 </body>
 </html>

@@ -10,4 +10,6 @@ public interface CommentsRepository extends JpaRepository<Comments, Integer> {
     Optional<Comments> findByUser_UserIdAndCosmeticItem_CosmeticItemId(Integer userId, Integer itemId);
     Integer deleteByCommentIdAndUser_Login(Integer commentId, String login);
 
+
+
 }

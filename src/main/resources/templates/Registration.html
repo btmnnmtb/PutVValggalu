@@ -1,89 +1,121 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Регистрация</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Регистрация — Glamour</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f6f9;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+        :root{
+          --bg1:#f5f7fa; --bg2:#c3cfe2;
+          --primary:#e91e63; --primary-dark:#c2185b;
+          --text:#111827; --muted:#6b7280;
+          --card:#fff; --ring:#e5e7eb; --error:#c62828;
+          --shadow:0 10px 30px rgba(0,0,0,.08);
         }
-        .form-container {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            width: 350px;
+        body{
+          margin:0; font-family:Arial, sans-serif; color:var(--text);
+          background:linear-gradient(135deg,var(--bg1) 0%,var(--bg2) 100%);
         }
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-            color: #333;
+        .page{ min-height:100svh; padding-top:80px; display:grid; place-items:center; }
+
+        .card{
+          width:min(94vw,420px);
+          background:var(--card);
+          border-radius:16px;
+          box-shadow:var(--shadow);
+          padding:28px 24px; position:relative; overflow:hidden;
         }
-        label {
-            display: block;
-            margin-top: 10px;
-            font-weight: bold;
+        .card::before{
+          content:""; position:absolute; inset:auto -40% 0 -40%; height:120px;
+          background:radial-gradient(60% 80% at 50% 100%, rgba(233,30,99,.10), transparent 70%);
+          pointer-events:none;
         }
-        input, select {
-            width: 100%;
-            padding: 10px;
-            margin-top: 6px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
+
+        .brand{ display:flex; align-items:center; gap:10px; }
+        .brand__logo{ font-size:24px; font-weight:800; color:var(--primary); letter-spacing:.3px; }
+        .brand__tag{ font-size:12px; color:var(--muted); }
+
+        h1{ font-size:22px; margin:8px 0 18px; }
+
+        .field{ margin-top:12px; }
+        .label{ display:block; font-weight:700; font-size:13px; margin:0 0 6px; color:#374151; }
+        .input{
+          width:100%; padding:12px 14px; border:1px solid var(--ring); border-radius:10px;
+          font-size:15px; outline:0; transition:box-shadow .2s, border-color .2s;
+          background:#fff;
         }
-        .error {
-            color: red;
-            font-size: 12px;
+        .input:focus{ border-color:var(--primary); box-shadow:0 0 0 3px rgba(233,30,99,.15); }
+        .error{ color:var(--error); font-size:13px; margin-top:6px; text-align:center; }
+
+        /* пароль — показать/сила */
+        .pwd-row{ display:flex; gap:10px; align-items:center; justify-content:space-between; margin-top:8px; }
+        .muted{ color:var(--muted); font-size:13px; }
+        .meter{ height:8px; border-radius:999px; background:#eef2f7; overflow:hidden; margin-top:8px; }
+        .meter>span{ display:block; height:100%; width:0; background:linear-gradient(90deg,#ef4444,#f59e0b,#10b981); transition:width .25s; }
+
+        .btn{
+          width:100%; padding:12px; border:0; border-radius:10px; cursor:pointer;
+          color:#fff; font-weight:700; font-size:16px; margin-top:16px;
+          background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+          box-shadow:0 8px 22px rgba(233,30,99,.25);
+          transition:transform .08s ease, filter .2s;
         }
-        button {
-            width: 100%;
-            padding: 12px;
-            margin-top: 20px;
-            border: none;
-            border-radius: 8px;
-            background: #007bff;
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background 0.3s;
+        .btn:hover{ filter:brightness(1.03); }
+        .btn:active{ transform:translateY(1px); }
+
+        .btn-alt{
+          display:inline-block; width:100%; text-align:center; padding:12px; margin-top:10px;
+          background:#111827; color:#fff; border-radius:10px; text-decoration:none;
+          box-shadow:0 8px 22px rgba(17,24,39,.18);
         }
-        button:hover {
-            background: #0056b3;
-        }
-        .link-btn {
-            margin-top: 15px;
-            width: 100%;
-            background: #6c757d;
-        }
-        .link-btn:hover {
-            background: #5a6268;
+        .btn-alt:hover{ filter:brightness(1.05); }
+
+        .footnote{ text-align:center; font-size:13px; color:var(--muted); margin-top:12px; }
+        .link{ color:var(--primary); text-decoration:none; font-weight:700; }
+        .link:hover{ color:var(--primary-dark); text-decoration:underline; }
+
+        @media (max-width:480px){
+          .card{ padding:24px 18px; border-radius:14px; }
+          h1{ font-size:20px; }
         }
     </style>
 </head>
 <body>
-<div class="form-container">
-    <h2>Регистрация</h2>
-    <form th:action="@{/registration}" th:object="${user}" method="post">
-        <label for="login">Логин:</label>
-        <input type="text" id="login" th:field="*{login}" required>
-        <div th:if="${#fields.hasErrors('login')}" th:errors="*{login}" class="error"></div>
 
-        <label for="password">Пароль:</label>
-        <input type="password" id="password" th:field="*{rawPassword}" required>
-        <div th:if="${#fields.hasErrors('rawPassword')}" th:errors="*{rawPassword}" class="error"></div>
+<header>
+    <div th:replace="~{fragments :: headerFragment(${role} ?: 'Гость', ${username} ?: 'Гость')}"></div>
+</header>
 
+<main class="page">
+    <section class="card" aria-labelledby="reg-title">
+        <div class="brand">
+            <div class="brand__logo">Glamour</div>
+            <div class="brand__tag">создание аккаунта</div>
+        </div>
 
-        <button type="submit">Зарегистрироваться</button>
-    </form>
+        <h1 id="reg-title">Регистрация</h1>
 
-    <a th:href="@{/login}">
-        <button type="button" class="link-btn">Авторизация</button>
-    </a>
-</div>
-</body>
-</html>
+        <form th:action="@{/registration}" th:object="${user}" method="post" novalidate>
+            <div class="field">
+                <label for="login" class="label">Логин</label>
+                <input class="input" type="text" id="login" th:field="*{login}" autocomplete="username" required minlength="3" maxlength="40">
+                <div th:if="${#fields.hasErrors('login')}" th:errors="*{login}" class="error"></div>
+            </div>
+
+            <div class="field">
+                <label for="password" class="label">Пароль</label>
+                <input class="input" type="password" id="password" th:field="*{rawPassword}" autocomplete="new-password" required minlength="6" maxlength="64">
+                <div class="pwd-row">
+                    <label class="muted"><input type="checkbox" id="showpass"> показать пароль</label>
+                    <span id="pwdHint" class="muted">минимум 6 символов</span>
+                </div>
+                <div class="meter" aria-hidden="true"><span id="meterBar"></span></div>
+                <div th:if="${#fields.hasErrors('rawPassword')}" th:errors="*{rawPassword}" class="error"></div>
+            </div>
+            <button class="btn" type="submit">Зарегистрироваться</button>
+        </form>
+
+        <a class="btn-alt" th:href="@{/login}">У меня уже есть аккаунт</a>
+    </section>
+</main>
