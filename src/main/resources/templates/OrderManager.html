@@ -155,11 +155,9 @@
                 <option value="month">За месяц</option>
                 <option value="year">За год</option>
             </select>
-            <button class="filter-btn" onclick="applyFilters()">Применить фильтры</button>
         </div>
     </div>
 
-    <!-- Список заказов -->
     <div class="orders-list" th:if="${!#lists.isEmpty(orders)}">
         <div class="order-card"
              th:each="o : ${orders}"

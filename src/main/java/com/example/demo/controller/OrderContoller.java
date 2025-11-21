@@ -30,46 +30,102 @@ public class OrderContoller {
     private final UsersRepository usersRepository;
     private final OrderStatusRepository orderStatusRepository;
     private final AuditLogService auditLogService;
-        @GetMapping("/orders")
-        public String listMyOrders (Authentication auth, Model model){
-            var username = auth.getName();
-            var user = usersRepository.findByLogin(username).orElseThrow();
-            var role = user.getRole().getRoleName() == null ? "" : user.getRole().getRoleName().trim();
+    @GetMapping("/orders")
+    public String listMyOrders(Authentication auth,
+                               @RequestParam(required = false) String q,
+                               @RequestParam(required = false) String status,
+                               @RequestParam(required = false) String period,
+                               Model model) {
 
-            var isAdmin = role.equalsIgnoreCase("Администратор");
-            var isSet = role.equalsIgnoreCase("Сотрудник склада");
+        var username = auth.getName();
+        var user = usersRepository.findByLogin(username).orElseThrow();
+        var role = user.getRole().getRoleName() == null ? "" : user.getRole().getRoleName().trim();
 
-            var orders = isAdmin
-                    ? orderRepository.findAllWithItemsOrderByOrderDateDesc()
-                    : orderRepository.findAllByUser_LoginOrderByOrderDateDesc(username);
-            var orderSet = isSet
-                    ? orderRepository.findAllWithItemsOrderByOrderDateDesc()
-                    : orderRepository.findAllByUser_LoginOrderByOrderDateDesc(username);
+        var isAdmin = role.equalsIgnoreCase("Администратор");
+        var isSet = role.equalsIgnoreCase("Сотрудник склада");
 
-            long total = orders.size();
-            long processing = orders.stream()
-                    .filter(o -> o.getOrderStatus() != null && o.getOrderStatus().getOrderStatus() != null)
-                    .filter(o -> o.getOrderStatus().getOrderStatus().equalsIgnoreCase("Собираеться")
-                            || o.getOrderStatus().getOrderStatus().equalsIgnoreCase("В обработке"))
-                    .count();
+        List<Orders> orders = (isAdmin || isSet)
+                ? orderRepository.findAllWithItemsOrderByOrderDateDesc()
+                : orderRepository.findAllByUser_LoginOrderByOrderDateDesc(username);
 
-            long delivered = orders.stream()
-                    .filter(o -> o.getOrderStatus() != null && o.getOrderStatus().getOrderStatus() != null)
-                    .filter(o -> o.getOrderStatus().getOrderStatus().equalsIgnoreCase("Готов к выдачи")
-                            || o.getOrderStatus().getOrderStatus().equalsIgnoreCase("Доставлено"))
-                    .count();
+        if (q != null && !q.isBlank()) {
+            String qLower = q.toLowerCase();
 
-            model.addAttribute("orders", orders);
-            model.addAttribute("ordersTotal", total);
-            model.addAttribute("ordersProcessing", processing);
-            model.addAttribute("ordersDelivered", delivered);
-
-            model.addAttribute("username", username);
-            model.addAttribute("role", role);
-            model.addAttribute("pageTitle", isAdmin ? "Все заказы" : "Мои заказы");
-
-            return "Order";
+            orders = orders.stream()
+                    .filter(o ->
+                            // по номеру
+                            String.valueOf(o.getOrderId()).contains(qLower)
+                                    ||
+                                    // по названию товара
+                                    (o.getItems() != null && o.getItems().stream().anyMatch(it ->
+                                            it.getCosmeticItem() != null &&
+                                                    it.getCosmeticItem().getItemName() != null &&
+                                                    it.getCosmeticItem().getItemName().toLowerCase().contains(qLower)
+                                    ))
+                    )
+                    .toList();
         }
+
+        if (status != null && !status.isBlank()) {
+            orders = orders.stream()
+                    .filter(o -> o.getOrderStatus() != null
+                            && status.equals(o.getOrderStatus().getOrderStatus()))
+                    .toList();
+        }
+
+        if (period != null && !period.isBlank()) {
+            LocalDateTime from = switch (period) {
+                case "week"  -> LocalDateTime.now().minusWeeks(1);
+                case "month" -> LocalDateTime.now().minusMonths(1);
+                case "year"  -> LocalDateTime.now().minusYears(1);
+                default -> null;
+            };
+
+            if (from != null) {
+                orders = orders.stream()
+                        .filter(o -> {
+                            if (o.getOrderDate() == null) return false;
+                            return o.getOrderDate().toInstant().isAfter(from.atZone(java.time.ZoneId.systemDefault()).toInstant());
+                        })
+                        .toList();
+            }
+        }
+
+        long total = orders.size();
+        long processing = orders.stream()
+                .filter(o -> o.getOrderStatus() != null && o.getOrderStatus().getOrderStatus() != null)
+                .filter(o -> o.getOrderStatus().getOrderStatus().equalsIgnoreCase("Собираеться")
+                        || o.getOrderStatus().getOrderStatus().equalsIgnoreCase("В обработке"))
+                .count();
+
+        long delivered = orders.stream()
+                .filter(o -> o.getOrderStatus() != null && o.getOrderStatus().getOrderStatus() != null)
+                .filter(o -> o.getOrderStatus().getOrderStatus().equalsIgnoreCase("Готов к выдачи")
+                        || o.getOrderStatus().getOrderStatus().equalsIgnoreCase("Доставлено")
+                        || o.getOrderStatus().getOrderStatus().equalsIgnoreCase("Завершен"))
+                .count();
+
+        List<Order_status> statuses = orderStatusRepository.findAll();
+
+        // В модель:
+        model.addAttribute("orders", orders);
+        model.addAttribute("ordersTotal", total);
+        model.addAttribute("ordersProcessing", processing);
+        model.addAttribute("ordersDelivered", delivered);
+
+        model.addAttribute("statuses", statuses);
+
+        model.addAttribute("q", q);
+        model.addAttribute("status", status);
+        model.addAttribute("period", period);
+
+        model.addAttribute("username", username);
+        model.addAttribute("role", role);
+        model.addAttribute("pageTitle", isAdmin ? "Все заказы" : "Мои заказы");
+
+        return "Order"; // твой шаблон
+    }
+
     @GetMapping("/manager/OrderManager")
     public String listAllOrders(Authentication auth, Model model) {
         var username = auth.getName();

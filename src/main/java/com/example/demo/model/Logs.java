@@ -20,6 +20,7 @@ import java.time.format.DateTimeFormatter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Data
 public class Logs {
 
     @Id

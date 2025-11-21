@@ -49,6 +49,8 @@ public class CosmeticItemForm {
     private MultipartFile imageFile;
 
     @Column(name = "moderation_note", columnDefinition = "text")
+
+    @Size(max = 100, message = "Отказ до 100 символов")
     private String moderationNote;
 
 

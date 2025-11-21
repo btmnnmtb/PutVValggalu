@@ -13,13 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-    @Autowired
-    private RolesRepository rolesRepository;
-    @Autowired
-    private UsersRepository usersRepository;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
+    private final UsersRepository usersRepository;
+    private final RolesRepository rolesRepository;
+    private final PasswordEncoder passwordEncoder;
     final private AuditLogService auditLogService;
 
     @Transactional

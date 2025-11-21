@@ -20,16 +20,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class UserService implements UserDetailsService {
-    @Autowired
-    private UsersRepository usersRepository;
+
+    private final UsersRepository usersRepository;
+    private final RolesRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
     private final AuditLogService auditLog;
     private final SecurityAuditor securityAuditor;
     private final ObjectMapper om;
-
-    @Autowired
-    PasswordEncoder passwordEncoder;
-    @Autowired
-    RolesRepository roleRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -102,9 +99,6 @@ public class UserService implements UserDetailsService {
         var user = usersRepository.findById(id)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        var before = om.createObjectNode()
-                .put("login", user.getLogin())
-                .put("role", user.getRole().getRoleName());
 
         if (newLogin == null || newLogin.isBlank()) {
             throw new IllegalArgumentException("Login не может быть пустым");
@@ -120,6 +114,10 @@ public class UserService implements UserDetailsService {
         user.setRole(role);
 
         usersRepository.save(user);
+        var before = om.createObjectNode()
+                .put("login", user.getLogin())
+                .put("role", user.getRole().getRoleName());
+
 
         var after = om.createObjectNode()
                 .put("login", user.getLogin())

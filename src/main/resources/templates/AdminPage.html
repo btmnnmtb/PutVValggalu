@@ -448,6 +448,115 @@
         .btn-save:hover {
             box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
         }
+        .logs-section .section-title::before {
+    content: '📜';
+}
+
+.logs-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.logs-meta {
+    font-size: 0.85rem;
+    color: #718096;
+}
+
+.logs-search {
+    max-width: 360px;
+    margin-bottom: 0;
+}
+
+.logs-table {
+    font-size: 0.9rem;
+}
+
+.logs-table thead th[data-sort] {
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+}
+
+.logs-table thead th[data-sort]::after {
+    content: '⇅';
+    font-size: 0.7rem;
+    opacity: 0.4;
+    margin-left: 0.25rem;
+}
+
+.logs-table thead th[data-sort].sort-asc::after {
+    content: '▲';
+    opacity: 0.8;
+}
+
+.logs-table thead th[data-sort].sort-desc::after {
+    content: '▼';
+    opacity: 0.8;
+}
+
+.logs-table tbody tr:nth-child(even) {
+    background: #f9fafb;
+}
+
+.logs-table tbody tr:hover {
+    background: #eef2ff;
+}
+
+.log-action-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+.log-user-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    background: #eef2ff;
+    color: #1f2937;
+}
+
+.log-user-pill::before {
+    content: '👤';
+    font-size: 0.9rem;
+    margin-right: 0.25rem;
+}
+
+.log-details {
+    max-width: 420px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.8rem;
+    color: #4b5563;
+    cursor: pointer;
+}
+
+.log-details.expanded {
+    white-space: pre-wrap;
+    max-height: 260px;
+    overflow: auto;
+    background: #f9fafb;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+}
+
+.log-details-hint {
+    font-size: 0.75rem;
+    color: #a0aec0;
+    margin-top: 0.2rem;
+}
 
         /* Адаптивность */
         @media (max-width: 1200px) {
@@ -597,8 +706,73 @@
         </button>
     </div>
 </div>
+<div class="users-section logs-section">
+    <div class="logs-header-row">
+        <h2 class="section-title">Журнал действий</h2>
+        <div class="logs-meta">
+            Всего записей: <span th:text="${#lists.size(logs)}">0</span>
+        </div>
+    </div>
 
-<!-- Модалка ДОБАВЛЕНИЯ -->
+    <input type="text"
+           id="logSearch"
+           class="search-box logs-search"
+           placeholder="🔍 Поиск по действиям, пользователям и деталям…"
+           oninput="filterLogs(this.value)">
+
+    <table class="users-table logs-table">
+        <thead>
+        <tr>
+            <th data-sort="id">#</th>
+            <th data-sort="date">Дата и время</th>
+            <th data-sort="action">Действие</th>
+            <th data-sort="user">Пользователь</th>
+            <th data-sort="target">Цель (над кем)</th>
+            <th>Детали</th>
+        </tr>
+        </thead>
+        <tbody id="logsTbody">
+        <tr th:each="log : ${logs}">
+            <td th:text="${log.logId}">1</td>
+
+            <td class="log-date"
+                th:attr="data-ts=${log.logDate != null ? log.logDate.toEpochMilli() : 0}"
+                th:text="${log.formattedLogDate}">
+                01.01.2025 12:00:00
+            </td>
+
+            <td>
+                <span class="log-action-pill"
+                      th:text="${log.action != null ? log.action.actionName : '—'}">
+                    LOGIN
+                </span>
+            </td>
+
+            <td>
+                <span class="log-user-pill"
+                      th:text="${log.user != null ? log.user.login : '—'}">
+                    admin
+                </span>
+            </td>
+
+            <td>
+                <span class="log-user-pill"
+                      th:text="${log.targetUser != null ? log.targetUser.login : '—'}">
+                    user1
+                </span>
+            </td>
+
+            <td>
+                <div class="log-details"
+                     th:text="${log.details}">
+
+                </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
 <div id="addUserModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -633,7 +807,6 @@
     </div>
 </div>
 
-<!-- Модалка РЕДАКТИРОВАНИЯ -->
 <div id="editUserModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -844,6 +1017,72 @@
       console.log('[admin hotkeys] ready');
     })();
 </script>
+<script>
+    // --- Фильтрация и сортировка логов ---
+    function filterLogs(query) {
+        query = (query || '').toLowerCase();
+        const rows = document.querySelectorAll('#logsTbody tr');
+        rows.forEach(tr => {
+            const text = tr.innerText.toLowerCase();
+            tr.style.display = text.includes(query) ? '' : 'none';
+        });
+    }
+
+    function initLogsSorting() {
+        const table = document.querySelector('.logs-table');
+        if (!table) return;
+
+        const headers = table.querySelectorAll('thead th[data-sort]');
+        const tbody = document.getElementById('logsTbody');
+
+        headers.forEach(th => {
+            th.addEventListener('click', () => {
+                const field = th.dataset.sort;
+                const current = th.classList.contains('sort-asc') ? 'asc'
+                              : th.classList.contains('sort-desc') ? 'desc'
+                              : null;
+                const next = current === 'asc' ? 'desc' : 'asc';
+
+                // сбросить классы на других заголовках
+                headers.forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+                th.classList.add(next === 'asc' ? 'sort-asc' : 'sort-desc');
+
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                const idx = Array.from(th.parentNode.children).indexOf(th);
+
+                rows.sort((a, b) => {
+                    let av, bv;
+                    if (field === 'date') {
+                        av = Number(a.querySelector('.log-date').dataset.ts || '0');
+                        bv = Number(b.querySelector('.log-date').dataset.ts || '0');
+                    } else {
+                        av = (a.children[idx].innerText || '').trim().toLowerCase();
+                        bv = (b.children[idx].innerText || '').trim().toLowerCase();
+                    }
+                    if (av === bv) return 0;
+                    const res = av > bv ? 1 : -1;
+                    return next === 'asc' ? res : -res;
+                });
+
+                tbody.append(...rows);
+            });
+        });
+    }
+
+    function initLogDetailsToggle() {
+        document.querySelectorAll('.log-details').forEach(el => {
+            el.addEventListener('click', () => {
+                el.classList.toggle('expanded');
+            });
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initLogsSorting();
+        initLogDetailsToggle();
+    });
+</script>
+
 
 </body>
 </html>

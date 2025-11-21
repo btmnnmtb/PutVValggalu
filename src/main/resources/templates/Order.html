@@ -618,12 +618,15 @@
                        th:value="${q}">
 
                 <select name="status" class="filter-select">
-                    <option value="" th:selected="${status} == null or ${status} == ''">Все статусы</option>
+                    <option value=""
+                            th:selected="${status == null or status == ''}">
+                        Все статусы
+                    </option>
 
                     <option th:each="s : ${statuses}"
                             th:value="${s.orderStatus}"
-                    th:text="${s.orderStatus}"
-                    th:selected="${status} == s.orderStatus}">
+                            th:text="${s.orderStatus}"
+                            th:selected="${status == s.orderStatus}">
                     </option>
                 </select>
 

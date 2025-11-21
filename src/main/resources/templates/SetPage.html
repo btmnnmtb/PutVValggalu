@@ -214,7 +214,8 @@
             <form class="approval-form" id="rejectForm" method="post" style="margin-top:1rem">
                 <label class="form-label" for="m-note">Причина отказа (видит менеджер):</label>
                 <textarea class="form-textarea" id="m-note" name="note"
-                          placeholder="Коротко опишите, что нужно исправить"></textarea>
+                          placeholder="Коротко опишите, что нужно исправить"
+                          required></textarea>
                 <div class="modal-actions" style="margin-top:1rem">
                     <button type="submit" class="btn btn-delete">Отказать</button>
                 </div>
@@ -223,7 +224,7 @@
         <form class="approval-form" id="supplyForm" method="post" style="display:none">
             <div class="form-group">
                 <label class="form-label">Пополнить склад (шт.)</label>
-                <input type="number" name="qty" min="1" step="1" value="1" class="form-textarea" style="min-height:auto">
+                <input type="number" name="qty" min="1" step="1" value="1" required class="form-textarea" style="min-height:auto">
             </div>
             <div class="modal-actions">
                 <button type="submit" class="btn btn-save">Пополнить</button>

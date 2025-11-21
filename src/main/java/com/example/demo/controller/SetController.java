@@ -34,7 +34,6 @@ public class SetController {
     private final ProductStatusRepository productStatusRepository;
     private final AuditLogService auditLogService;
 
-    // Константы статусов (совпадают с твоей БД)
     private static final int ST_APPROVED = 7;
     private static final int ST_PENDING = 8;
     private static final int ST_REWORK = 10;
@@ -121,15 +120,21 @@ public class SetController {
     }
     @PostMapping("/Set/approvals/{itemId}/supply")
     public String supply(@PathVariable Integer itemId,
-                         @RequestParam("qty") int qty,
+                         @RequestParam(name = "qty", required = false) Integer qty,
                          Authentication auth,
                          HttpServletRequest request,
                          RedirectAttributes ra) {
+        if (qty == null) {
+            ra.addFlashAttribute("err", "Укажите количество для пополнения");
+            return "redirect:/Set/approvals?filter=approved";
+        }
 
         if (qty < 1) {
             ra.addFlashAttribute("err", "Количество должно быть ≥ 1");
             return "redirect:/Set/approvals?filter=approved";
         }
+
+
 
         var actor = usersRepository.findByLogin(auth.getName()).orElse(null);
 

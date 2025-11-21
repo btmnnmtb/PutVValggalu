@@ -1,5 +1,6 @@
 package com.example.demo.controller;
 
+import com.example.demo.repository.LogsRepository;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.dao.DataIntegrityViolationException;
 import com.example.demo.model.CreateUserDto;
@@ -12,7 +13,9 @@ import com.example.demo.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -24,6 +27,7 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -37,6 +41,7 @@ public class AdminPageContoller {
     private final UsersRepository usersRepository;
     private final RolesRepository rolesRepository;
     private final UserService userService;
+    private final LogsRepository logsRepository;
 
     @GetMapping("/AdminPage")
     public String adminUsers(Authentication authentication, Model model) {
@@ -52,27 +57,56 @@ public class AdminPageContoller {
         model.addAttribute("ordersCount", orderRepository.count());
         model.addAttribute("totalRevenue", orderRepository.sumTotalRevenue());
         model.addAttribute("roles", rolesRepository.findAll());
+        model.addAttribute("logs",
+                logsRepository.findAll(Sort.by(Sort.Direction.DESC, "logDate")));
+
 
         if (!model.containsAttribute("createUser")) model.addAttribute("createUser", new CreateUserDto());
         if (!model.containsAttribute("editUser"))   model.addAttribute("editUser", new UpdateUserDto());
 
+        DateTimeFormatter YM_FMT = DateTimeFormatter.ofPattern("yyyy-MM");
+
         var startYm = YearMonth.now().minusMonths(11);
         var months = new ArrayList<YearMonth>(12);
-        for (int i = 0; i < 12; i++) months.add(startYm.plusMonths(i));
+        for (int i = 0; i < 12; i++) {
+            months.add(startYm.plusMonths(i));
+        }
 
         var fromTs = Timestamp.valueOf(startYm.atDay(1).atStartOfDay());
+        System.out.println("fromTs = " + fromTs);
+
         List<OrderRepository.OrderMonthlyAgg> rows = orderRepository.statsRevenueByMonth(fromTs);
 
-        Map<String, OrderRepository.OrderMonthlyAgg> byYm = new HashMap<>();
-        for (var r : rows) byYm.put(r.getYm(), r);
+        System.out.println("=== rows from DB ===");
+        for (var r : rows) {
+            System.out.printf("ym=%s revenue=%s cnt=%s%n",
+                    r.getYm(), r.getRevenue(), r.getCnt());
+        }
+
+        Map<YearMonth, OrderRepository.OrderMonthlyAgg> byYm = new HashMap<>();
+        for (var r : rows) {
+            try {
+                YearMonth ym = YearMonth.parse(r.getYm(), YM_FMT);
+                byYm.put(ym, r);
+            } catch (Exception ex) {
+                System.out.println("Cannot parse ym: " + r.getYm() + " -> " + ex);
+            }
+        }
 
         List<String> labels = new ArrayList<>();
         List<BigDecimal> revenue = new ArrayList<>();
         List<Long> counts = new ArrayList<>();
+
+        System.out.println("=== loop by months ===");
         for (var m : months) {
-            String ym = m.toString(); // "YYYY-MM"
-            labels.add(m.getMonthValue() + "." + m.getYear()); // человекочитаемый, например "11.2025"
-            var r = byYm.get(ym);
+            labels.add(m.getMonthValue() + "." + m.getYear());
+            var r = byYm.get(m);
+            System.out.printf("month=%s found=%s revenue=%s cnt=%s%n",
+                    m,
+                    (r != null),
+                    (r != null ? r.getRevenue() : BigDecimal.ZERO),
+                    (r != null ? r.getCnt() : 0L));
+
             revenue.add(r != null ? r.getRevenue() : BigDecimal.ZERO);
             counts.add(r != null ? r.getCnt() : 0L);
         }

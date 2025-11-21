@@ -125,7 +125,6 @@ public class CosmeticItemsService {
                 .put("manufacturerId", e.getManufacturerId())
                 .put("certificateId", e.getCertificateId());
 
-        // --- APPLY CHANGES ---
         e.setItemName(f.getItemName());
         e.setCosmeticTypeId(f.getCosmeticTypeId());
         e.setBrandId(f.getBrandId());
