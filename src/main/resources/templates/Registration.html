@@ -101,6 +101,8 @@
                 <label for="login" class="label">Логин</label>
                 <input class="input" type="text" id="login" th:field="*{login}" autocomplete="username" required minlength="3" maxlength="40">
                 <div th:if="${#fields.hasErrors('login')}" th:errors="*{login}" class="error"></div>
+                <div th:if="${loginExists}" class="error" th:text="${loginExists}"></div>
+
             </div>
 
             <div class="field">

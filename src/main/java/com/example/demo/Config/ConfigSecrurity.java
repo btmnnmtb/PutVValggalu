@@ -52,7 +52,7 @@ public class ConfigSecrurity {
                         .requestMatchers("/", "/MainWindow", "/Catalog").permitAll()
                         .requestMatchers(HttpMethod.GET, "/orders").hasAnyAuthority("Администратор","Пользователь")
 
-                        .requestMatchers("/admin/**", "/AdminPage" , "comments/{id}/delete").hasAuthority("Администратор")
+                        .requestMatchers("/admin/**", "/AdminPage").hasAuthority("Администратор")
                         .requestMatchers("/manager/**", "/OrderManager", "/ManagerPage").hasAuthority("Менаджер")
                         .requestMatchers("/manager/reports/**").hasAuthority("Менеджер")
                         .requestMatchers("/Set/**" , "/SetPage").hasAuthority("Сотрудник склада")
@@ -60,7 +60,7 @@ public class ConfigSecrurity {
                         .requestMatchers("/favourites/**", "/cart/**", "/orders/**").hasAuthority("Пользователь")
                         .requestMatchers(HttpMethod.POST, "/cart/items/**", "/Delete/**").hasAuthority("Пользователь")
                         .requestMatchers(HttpMethod.POST, "/comments").hasAuthority("Пользователь")
-                        .requestMatchers(HttpMethod.POST, "/comments/{id}/delete").hasAuthority("Пользователь")
+                        .requestMatchers(HttpMethod.POST, "/comments/*/delete").hasAnyAuthority("Пользователь", "Администратор")
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

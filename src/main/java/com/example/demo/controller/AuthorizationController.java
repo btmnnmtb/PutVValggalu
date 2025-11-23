@@ -43,6 +43,11 @@ public class AuthorizationController {
             model.addAttribute("roles", rolesRepository.findAll());
             return "registration";
         }
+        if (usersRepository.findByLogin(user.getLogin()).isPresent()) {
+            model.addAttribute("roles", rolesRepository.findAll());
+            model.addAttribute("loginExists", "Пользователь с таким логином уже существует");
+            return "registration";
+        }
 
         Roles autorole = rolesRepository.findByRoleName("Пользователь")
                 .orElseThrow(() -> new IllegalArgumentException("Роль не найдена"));
