@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface CosmeticItemRepository extends JpaRepository<Cosmetic_items, Integer> {
 
@@ -26,6 +27,7 @@ public interface CosmeticItemRepository extends JpaRepository<Cosmetic_items, In
         """, nativeQuery = true)
     InventoryStats getInventoryStats();
     long countByProductStatusId(Integer productStatusId);
+    Optional<Cosmetic_items> findByItemName(String itemName);
 
     List<Cosmetic_items> findAllByProductStatusIdOrderByCosmeticItemIdDesc(Integer productStatusId);
 }

@@ -44,8 +44,8 @@ public class Orders {
     @Column(name = "total", precision = 10, scale = 2)
     private BigDecimal total;
 
-
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    @JsonManagedReference
     private List<Order_item> items = new ArrayList<>();
 }
 

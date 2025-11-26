@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.repository.LogsRepository;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import com.example.demo.model.CreateUserDto;
 import com.example.demo.model.UpdateUserDto;
@@ -25,7 +26,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -42,6 +47,20 @@ public class AdminPageContoller {
     private final RolesRepository rolesRepository;
     private final UserService userService;
     private final LogsRepository logsRepository;
+    @Value("${app.backup.pg_host:localhost}")
+    private String pgHost;
+
+    @Value("${app.backup.pg_port:5432}")
+    private String pgPort;
+
+    @Value("${app.backup.pg_user:postgres}")
+    private String pgUser;
+
+    @Value("${app.backup.pg_db:DBForKurs2}")
+    private String pgDb;
+
+    @Value("${spring.datasource.password}")
+    private String pgPassword;
 
     @GetMapping("/AdminPage")
     public String adminUsers(Authentication authentication, Model model) {
@@ -117,6 +136,53 @@ public class AdminPageContoller {
 
         return "AdminPage";
     }
+    @PostMapping("/admin/db-backup")
+    public String createDbBackup(RedirectAttributes ra) {
+        try {
+            Path backupDir = Paths.get("C:\\pg_backups");
+            Files.createDirectories(backupDir);
+
+            String ts = LocalDateTime.now()
+                    .format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+            String fileName = "backup-" + ts + ".backup";
+            Path backupFile = backupDir.resolve(fileName);
+
+            ProcessBuilder pb = new ProcessBuilder(
+                    "C:\\Program Files\\PostgreSQL\\17\\bin\\pg_dump.exe",
+                    "-h", pgHost,
+                    "-p", pgPort,
+                    "-U", pgUser,
+                    "-F", "c",
+                    "-f", backupFile.toString(),
+                    pgDb
+            );
+
+            pb.environment().put("PGPASSWORD", pgPassword);
+            pb.redirectErrorStream(true);
+
+            Process process = pb.start();
+            String output;
+            try (var reader = new java.io.BufferedReader(
+                    new java.io.InputStreamReader(process.getInputStream())
+            )) {
+                output = reader.lines().reduce("", (a, b) -> a + b + System.lineSeparator());
+            }
+
+            int exitCode = process.waitFor();
+            if (exitCode == 0) {
+                ra.addFlashAttribute("success",
+                        "Бэкап успешно создан: " + backupFile.toString());
+            } else {
+                ra.addFlashAttribute("error",
+                        "pg_dump завершился с кодом " + exitCode + ". Вывод: " + output);
+            }
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "Ошибка при создании бэкапа: " + e.getMessage());
+        }
+
+        return "redirect:/AdminPage";
+    }
+
 
     @GetMapping(value = "/admin/reports/orders.csv")
     public void exportOrdersMonthlyCsv(HttpServletResponse resp) throws Exception {

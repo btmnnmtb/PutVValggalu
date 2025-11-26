@@ -105,7 +105,7 @@ class CartServiceTest {
     void addCartItemOutOfStock() {
         User user = createUser();
         Carts cart = createCart(user);
-        Cosmetic_items product = createProduct(1, 0); // quantity = 0
+        Cosmetic_items product = createProduct(1, 0);
 
         when(usersRepository.findByLogin("user")).thenReturn(Optional.of(user));
         when(cartRepository.findByUser_UserId(user.getUserId()))
@@ -182,7 +182,7 @@ class CartServiceTest {
         Carts result = cartService.getCart("user");
 
         assertSame(cart, result);
-        verify(cartRepository, never()).save(any(Carts.class)); // новый не создавался
+        verify(cartRepository, never()).save(any(Carts.class));
     }
 
     @Test

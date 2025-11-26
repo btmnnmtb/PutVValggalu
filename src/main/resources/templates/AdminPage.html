@@ -640,14 +640,22 @@
                 <span class="control-icon">➕</span>
                 Добавить пользователя
             </button>
-            <a  id="btnExportCsv" href="/admin/reports/orders.csv" class="control-btn">
+
+            <a id="btnExportCsv" href="/admin/reports/orders.csv" class="control-btn">
                 <span class="control-icon">⬇️</span>
                 Экспорт (CSV, помесячно)
             </a>
+
+            <form th:action="@{/admin/db-backup}" method="post" style="margin: 0;">
+                <button id="btnBackupDb" class="control-btn" type="submit"
+                        onclick="return confirm('Создать бэкап базы данных в C:\\pg_backups?');">
+                    <span class="control-icon">💾</span>
+                    Создать бэкап БД
+                </button>
+            </form>
         </div>
     </div>
 
-    <!-- Один график: Доход по месяцам -->
     <div class="users-section">
         <h2 class="section-title">Доход по месяцам</h2>
         <canvas id="revenueChart" height="120"></canvas>

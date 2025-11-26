@@ -234,6 +234,29 @@
                     <a id="csvTopBrands" class="btn btn-edit" th:href="@{/manager/reports/export/top-brands.csv}">⬇️ CSV</a>
                 </div>
             </div>
+            <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid #e5e7eb">
+                <h3 style="font-size:1.2rem;margin-bottom:.5rem">Импорт товаров из CSV</h3>
+
+                <a class="btn btn-edit" th:href="@{/manager/reports/export/items-template.csv}">
+                    ⬇️ Скачать шаблон CSV
+                </a>
+
+                <form th:action="@{/manager/reports/import/items}"
+                      method="post"
+                      enctype="multipart/form-data"
+                      style="margin-top:.5rem">
+                    <input type="file" name="file" accept=".csv" class="form-input" required>
+                    <button type="submit" class="btn btn-save" style="margin-top:.5rem">
+                        ⬆️ Импорт CSV
+                    </button>
+                </form>
+
+                <p style="font-size:.85rem;color:#718096;margin-top:.3rem">
+                    Формат: <code>name;price;qty</code> (первая строка — заголовок).
+                    Существующие товары с таким же name будут обновлены, новые — созданы.
+                </p>
+            </div>
+
         </div>
     </div>
 
